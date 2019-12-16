@@ -1,0 +1,21 @@
+
+{
+  "artifactaccounts": [
+    {
+      "accountname": "my-artifact1",
+      "artifacttype": "github",
+      "username": "lalitv92",
+      "password": "",
+      "token": "be58afff8ad5120ac2cb5f91b7b6a0a85d89c41f"
+    },
+    {
+      "accountname": "my-artifact2",
+      "artifacttype": "s3",
+      "username": "user",
+      "password": "pwd"
+    }
+  ]
+}
+
+
+

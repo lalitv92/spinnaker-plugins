@@ -1,0 +1,3 @@
+[remote "origin"]
+	url = https://github.com/lalitv92/configureAWScli.git
+	fetch = +refs/heads/*:refs/remotes/origin/*

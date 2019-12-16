@@ -1,0 +1,34 @@
+
+
+          apiVersion: batch/v1
+          kind: Job
+          metadata:
+            name: spinautodb
+            namespace: 
+          spec:
+            backoffLimit: 0
+            template:
+              spec:
+                restartPolicy: Never
+                volumes:
+                  - name: opsmx-spinautodb-dbaccount-config
+                    configMap:
+                      name: spinautodbaccountconfig
+                  - name: opsmx-spinautodb-backend-config
+                    configMap:
+                      name: spinautodbbackendconfig
+                containers: 
+                  - name: spinautodb
+                    image: 'docker.io/opsmx11/spinautodb:test1'
+                    imagePullPolicy: Always
+                    env:
+                      - name: dbaccount
+                        value: 
+                      - name: dbscript
+                        value: 
+                    command: ["run.sh"]
+                    volumeMounts:
+                    - name: opsmx-spinautodb-dbaccount-config
+                      mountPath: /home/spinautodb/opsmx/db/
+                    - name: opsmx-spinautodb-backend-config
+                      mountPath: /home/spinautodb/opsmx/app/config/

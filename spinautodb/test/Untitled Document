@@ -1,0 +1,178 @@
+create database try2;
+
+create table rightpass (name VARCHAR);
+
+
+env value: dbaccount, dbscript
+
+
+sqlservers:
+  providers:
+    oracle:
+      enabled: false
+      accounts: []
+    postgres:
+      enabled: true
+      accounts:
+      - name: my-database1
+        username: user
+        password: pwd
+        dbendpoint: endpoint
+      - name: my-database2
+        username: user
+        password: pwd
+        dbendpoint: endpoint
+
+
+
+{
+  "dbaccounts": [
+    {
+      "accountname": "my-database1",
+      "dbtype": "postgres",
+      "username": "postgres",
+      "password": "networks123",
+      "dbendpoint": "34.83.55.40:5432/try1"
+    },
+    {
+      "accountname": "my-database2",
+      "dbtype": "mysql",
+      "username": "user",
+      "password": "pwd",
+      "dbendpoint": "endpoint"
+    }
+  ]
+}
+
+
+dbendpoint username password sqlscriptpath
+
+
+job:
+  preconfigured:
+    kubernetes:
+      - label: SQLStage
+        type: customJobSQLStage
+        description: Stage for db migration
+        cloudProvider: kubernetes
+        account: my-k8s-v2-account
+        credentials: my-k8s-v2-account
+        waitForCompletion: true
+        application: bookmarks
+        parameters:
+          - name: pass db account name.
+            label: dbaccount
+            description: pass db account name on which you want to do SQL operation.
+            mapping: manifest.spec.template.spec.containers[0].env[0].value
+            defaultValue: "example1"
+          - name: pass artifact account name.
+            label: artifactaccount
+            description: pass artifact account name on which your sql file present.
+            mapping: manifest.spec.template.spec.containers[0].env[1].value
+            defaultValue: "example2"
+          - name: SQLfile path
+            label: SQLfile path
+            description: pass migration script contains.
+            mapping: manifest.spec.template.spec.containers[0].env[2].value
+            defaultValue: "example3"
+          - name: namespace
+            label: namespace
+            description: pass namespace in which you want to deploy k8 object.
+            mapping: manifest.metadata.namespace
+            defaultValue: "example4"
+        manifest:
+          apiVersion: batch/v1
+          kind: Job
+          metadata:
+            name: spinautodb
+            namespace: 
+          spec:
+            backoffLimit: 0
+            template:
+              spec:
+                restartPolicy: Never
+                volumes:
+                  - name: opsmx-spinautodb-dbaccount-config
+                    configMap:
+                      name: spinautodbaccountconfig
+                  - name: opsmx-spinautodb-artifactaccount-config
+                    configMap:
+                      name: spinautodbartifactaccountconfig
+                containers: 
+                  - name: spinautodb
+                    image: 'docker.io/opsmx11/spinautodb:test1'
+                    imagePullPolicy: Always
+                    env:
+                      - name: dbaccount
+                        value: 
+                      - name: artifactaccount
+                        value: 
+                      - name: dbscript
+                        value: 
+                    command: ["run.sh"]
+                    volumeMounts:
+                    - name: opsmx-spinautodb-dbaccount-config
+                      mountPath: /home/spinautodb/opsmx/db/
+                    - name: opsmx-spinautodb-artifactaccount-config
+                      mountPath: /home/spinautodb/opsmx/artifact/
+
+
+
+
+webhook: 
+  preconfigured: 
+  - label: Terraform-destroy
+    description: "To destroy terraform plan"
+    enabled: true
+    type: terraformCWDestroyStage
+#    url: "http://35.237.198.105:8888/api/v1/terraformDestroy"
+    url: "http://34.68.69.32:8090/api/v1/terraformPlan"
+    method: POST
+    payload: |-
+        {
+          "applicationName": "${execution['application']}",
+          "pipelineName": "${execution['name']}",
+          "pipelineId": "${execution['pipelineConfigId']}"   
+        }
+
+  - label: Terraform-apply
+    description: "To apply terraform plan"
+    enabled: true
+    type: terraformCWApplyStage
+#    url: "http://35.237.198.105:8888/api/v1/terraformApply"
+    url: "http://34.68.69.32:8090/api/v1/terraformApply"
+    method: POST
+    payload: |-
+        {
+          "applicationName": "${execution['application']}",
+          "pipelineName": "${execution['name']}",
+          "pipelineId": "${execution['pipelineConfigId']}"
+        }
+  
+
+
+      - name: devk8s-v2local
+        requiredGroupMembership: []
+        providerVersion: V2
+        permissions: {}
+        dockerRegistries: []
+        configureImagePullSecrets: true
+        cacheThreads: 1
+        namespaces: []
+        omitNamespaces: []
+        kinds: []
+        omitKinds: []
+        customResources: []
+        cachingPolicies: []
+        kubeconfigFile: /home/opsmxgcetest/.kube/devk8slocal
+        liveManifestCalls: true
+        oAuthScopes: []
+        onlySpinnakerManaged: false
+
+
+
+kubectl describe cm spinautodbbackendconfig -n test1 --kubeconfig=/home/opsmxgcetest/.kube/devk8slocal
+kubectl describe cm spinautodbbackendconfig -n test1 --kubeconfig=/home/opsmxgcetest/.kube/devk8slocal
+kubectl create cm spinautodbbackendconfig --from-file=application.properties -n test1 --kubeconfig=/home/opsmxgcetest/.kube/eksconfig
+kubectl create cm spinautodbaccountconfig --from-file=config -n test1 --kubeconfig=/home/opsmxgcetest/.kube/eksconfig
+kubectl create ns test1 --kubeconfig=/home/opsmxgcetest/.kube/eksconfig

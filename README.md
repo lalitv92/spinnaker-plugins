@@ -1,2 +1,2 @@
 # spinnaker-plugins
-plugins/service as spinnaker value-add
+plugins/services as spinnaker value-add

@@ -128,7 +128,7 @@ public class ApplicationStartup implements ApplicationListener<ContextRefreshedE
 			currentProvideObj.serviceProviderSetting(migrationDBSourceFile, userName.trim(), password.trim(), dbEndpoint.trim());
 
 		} catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
-			log.info("");
+			log.info("" + "error " + e);
 			throw new RuntimeException("error ",e);
 		} 
 		

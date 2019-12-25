@@ -1,1 +1,1 @@
-create table timepass (name VARCHAR);
+create table timepass3 (name VARCHAR);

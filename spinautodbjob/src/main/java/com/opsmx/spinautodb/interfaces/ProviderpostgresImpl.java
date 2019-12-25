@@ -20,6 +20,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.PrintWriter;
 import java.io.Reader;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -43,33 +44,38 @@ public class ProviderpostgresImpl implements Provider {
 			DriverManager.registerDriver(new org.postgresql.Driver());
 
 			// Getting the connection
-			// String mysqlUrl = "jdbc:postgresql://3654.8563.52125.40:545445432/try1" + dbendpoint;
 			String postgresUrl = "jdbc:postgresql://" + dbendpoint;
 			log.info("Connection URL : --" + postgresUrl);
 			Connection con = DriverManager.getConnection(postgresUrl, username, password);
-			System.out.println("Connection established......");
-			
+			log.info("Connection established");
+
 			// Initialize the script runner
 			ScriptRunner sr = new ScriptRunner(con);
+			sr.setStopOnError(true);
+			// sr.setThrowWarning(true);
+
 			// Creating a reader object
 			Reader reader = new BufferedReader(new FileReader(sqlscriptpath));
-			// Running the script
-			sr.runScript(reader);
+
+			try {
+				sr.runScript(reader);
+			} catch (Exception e) {
+				throw new IllegalStateException("Fail to restore: " + e);
+			}
 
 			con.close();
 
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			log.error(e.getMessage());
 		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			log.error(e.getMessage());
 		}
 	}
 
 	public static void main(String... args) {
 		ProviderpostgresImpl iml = new ProviderpostgresImpl();
-		File sqlscriptpath = new File("/home/opsmx/lalit/work/opsmx/spinautodb/test/try.sql");
-		iml.serviceProviderSetting(sqlscriptpath, "postgres", "networks123", "34.83.55.40:5432/try1");
+		File sqlscriptpath = new File("/home/opsmx/lalit/work/opsmx/DB-spinnaker/spinautodb/test/try.sql");
+		iml.serviceProviderSetting(sqlscriptpath, "postgres", "netrateworks780123", "34.83.55.40:5432/try1");
 	}
 }

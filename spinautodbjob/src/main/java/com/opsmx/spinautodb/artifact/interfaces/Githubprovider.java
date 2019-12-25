@@ -40,8 +40,9 @@ public class Githubprovider {
 	public static void main(String[] args) {
 
 		String abc = "TerraformPlansModule.git//Namespace/sdbc.sql";
-
 		System.out.println("first part :: " + abc.split("//")[0] + " and sceond part :: " + abc.split("//")[1]);
+		Githubprovider gp = new Githubprovider();
+		gp.getdbscriptpath("lalitv92", "Vi2!", abc);
 	}
 
 }

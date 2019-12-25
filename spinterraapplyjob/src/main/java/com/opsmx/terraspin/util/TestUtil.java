@@ -20,7 +20,7 @@ public class TestUtil {
 		
 		
 		  ProcessUtil processutil = new ProcessUtil(); 
-		  String gitclonecommand = "git clone https://lalitv92:Vikram92!@github.com/lalitv92/trytest.git";
+		  String gitclonecommand = "git clone https://lalitv92:Viui59skranmnmnntewm92!@github.com/lalitv92/trytest.git";
 		  String dir = "/home/opsmx/lalit/work/opsmx/extrathing/gittest/test2";
 		  
 		  boolean isgitcloned = processutil.runcommandwithindir(gitclonecommand,"/home/opsmx"); 

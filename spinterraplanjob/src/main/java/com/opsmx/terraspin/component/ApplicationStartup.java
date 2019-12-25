@@ -39,7 +39,6 @@ import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.stereotype.Component;
 
 import com.opsmx.terraspin.service.TerraService;
-import com.opsmx.terraspin.util.HalConfigUtil;
 import com.opsmx.terraspin.util.ProcessUtil;
 import com.opsmx.terraspin.util.TerraAppUtil;
 import com.opsmx.terraspin.util.ZipUtil;
@@ -102,34 +101,14 @@ public class ApplicationStartup implements ApplicationListener<ContextRefreshedE
 		if (!scriptDirFile.exists())
 			scriptDirFile.mkdir();
 
-		File terraformApplySource = new File(scriptDirFile.getPath() + separator + "exeTerraformApply.sh");
-		terraapputil.overWriteStreamOnFile(terraformApplySource, getClass().getClassLoader()
-				.getResourceAsStream(separator + "script" + separator + "exeTerraformApply.sh"));
-
+		File terraformInitSource = new File(scriptDirFile.getPath() + separator + "exeTerraformInit.sh");
+		terraapputil.overWriteStreamOnFile(terraformInitSource, getClass().getClassLoader()
+				.getResourceAsStream(separator + "script" + separator + "exeTerraformInit.sh"));
+		
 		File terraformPlanSource = new File(scriptDirFile.getPath() + separator + "exeTerraformPlan.sh");
 		terraapputil.overWriteStreamOnFile(terraformPlanSource, getClass().getClassLoader()
 				.getResourceAsStream(separator + "script" + separator + "exeTerraformPlan.sh"));
-
-		File terraformOutputSource = new File(scriptDirFile.getPath() + separator + "exeTerraformOutput.sh");
-		terraapputil.overWriteStreamOnFile(terraformOutputSource, getClass().getClassLoader()
-				.getResourceAsStream(separator + "script" + separator + "exeTerraformOutput.sh"));
-
-		File terraformGitOutputSource = new File(scriptDirFile.getPath() + separator + "exeTerraformGitOutput.sh");
-		terraapputil.overWriteStreamOnFile(terraformGitOutputSource, getClass().getClassLoader()
-				.getResourceAsStream(separator + "script" + separator + "exeTerraformGitOutput.sh"));
-
-		File terraformDestroySource = new File(scriptDirFile.getPath() + separator + "exeTerraformDestroy.sh");
-		terraapputil.overWriteStreamOnFile(terraformDestroySource, getClass().getClassLoader()
-				.getResourceAsStream(separator + "script" + separator + "exeTerraformDestroy.sh"));
-
-		File halConfigSource = new File(scriptDirFile.getPath() + separator + "exeHalConfig.sh");
-		terraapputil.overWriteStreamOnFile(halConfigSource,
-				getClass().getClassLoader().getResourceAsStream(separator + "script" + separator + "exeHalConfig.sh"));
-
-		/*
-		 * log.info("In hal config is container env :: " + isContainer);
-		 * HalConfigUtil.setHalConfig(halConfig(halConfigSource, isContainer));
-		 */
+		
 
 		String configString = terraapputil.getConfig();
 		JSONObject configObject = null;
@@ -349,72 +328,4 @@ public class ApplicationStartup implements ApplicationListener<ContextRefreshedE
 			log.info("artifact config is not present:");
 		}
 	}
-
-	@SuppressWarnings("unchecked")
-	public String halConfig(File file, boolean isContainerEnv) {
-		log.info("Hal config script path : " + file.getPath());
-		JSONParser parser = new JSONParser();
-		JSONObject halConfigRootObj = new JSONObject();
-		Process exec;
-		if (isContainerEnv) {
-
-			StringBuilder contentBuilder = new StringBuilder();
-			try (Stream<String> stream = Files.lines(Paths.get("/home/terraspin/opsmx/hal/halconfig"),
-					StandardCharsets.UTF_8))
-			// try (Stream<String> stream = Files.lines(
-			// Paths.get("/home/opsmx/lalit/work/opsmx/Terraform-spinnaker/TerraSpin/container/halconfig"),
-			// StandardCharsets.UTF_8))
-			{
-				stream.forEach(s -> contentBuilder.append(s).append("\n"));
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-			try {
-				halConfigRootObj = (JSONObject) parser.parse(contentBuilder.toString());
-			} catch (ParseException e) {
-				e.printStackTrace();
-			}
-		} else {
-			try {
-				exec = Runtime.getRuntime().exec(new String[] { "/bin/sh", "-c", "sh " + file.getPath() });
-				exec.waitFor();
-
-				BufferedReader reader = new BufferedReader(new InputStreamReader(exec.getInputStream()));
-				String line = "";
-				String tempLine = "";
-				while ((tempLine = reader.readLine()) != null) {
-					line = line + tempLine.trim() + System.lineSeparator();
-				}
-
-				BufferedReader errorReader = new BufferedReader(new InputStreamReader(exec.getErrorStream()));
-				String line2 = "";
-				String tempLine2 = "";
-				while ((tempLine2 = errorReader.readLine()) != null) {
-					line2 = line2 + tempLine2.trim() + System.lineSeparator();
-				}
-
-				reader.close();
-				errorReader.close();
-
-				if (exec.exitValue() == 0) {
-					int startIndex = line.indexOf('{');
-					String halConfigString = line.substring(startIndex);
-					halConfigRootObj = (JSONObject) parser.parse(halConfigString);
-					log.info("Successfully parsed hal config ");
-
-				} else {
-					halConfigRootObj.put("error", line2);
-					log.info("Error while fetching hal config! Please make sure you hal daemaon is running");
-				}
-
-			} catch (IOException | InterruptedException | ParseException e) {
-				log.info("Malformed Hal config Error :" + e.getMessage());
-				throw new RuntimeException("Malformed Hal config data", e);
-			}
-
-		}
-		// log.info("hal config Object :: " + halConfigRootObj);
-		return halConfigRootObj.toJSONString();
-	}
-
 }

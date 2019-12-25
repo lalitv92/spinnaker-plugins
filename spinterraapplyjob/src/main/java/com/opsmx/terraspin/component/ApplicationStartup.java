@@ -67,20 +67,6 @@ public class ApplicationStartup implements ApplicationListener<ContextRefreshedE
 	@Override
 	public void onApplicationEvent(final ContextRefreshedEvent event) {
 
-		/*
-		 * String currentUserDir = System.getProperty("user.home"); String spinPlan =
-		 * System.getenv("plan"); String spinGitAccount = System.getenv("gitAccount");
-		 * String spincloudAccount = System.getenv("cloudAccount"); String spinStateRepo
-		 * = System.getenv("stateRepo");
-		 * 
-		 * log.info("current user :: " + System.getProperty("user.name") +
-		 * " and user dir :: " + System.getProperty("user.home"));
-		 * 
-		 * log.info("spinPlan:" + spinPlan); log.info("spinGitAccount:" +
-		 * spinGitAccount); log.info("spincloudAccount:" + spincloudAccount);
-		 * log.info("spinStateRepo:" + spinStateRepo);
-		 */
-
 		String currentUserDir = System.getProperty("user.home");
 		String spinPlan = System.getenv("plan");
 		String spinArtifactAccount = System.getenv("artifactAccount");
@@ -121,10 +107,6 @@ public class ApplicationStartup implements ApplicationListener<ContextRefreshedE
 		terraapputil.overWriteStreamOnFile(terraformApplySource, getClass().getClassLoader()
 				.getResourceAsStream(separator + "script" + separator + "exeTerraformApply.sh"));
 
-		File terraformPlanSource = new File(scriptDirFile.getPath() + separator + "exeTerraformPlan.sh");
-		terraapputil.overWriteStreamOnFile(terraformPlanSource, getClass().getClassLoader()
-				.getResourceAsStream(separator + "script" + separator + "exeTerraformPlan.sh"));
-
 		File terraformOutputSource = new File(scriptDirFile.getPath() + separator + "exeTerraformOutput.sh");
 		terraapputil.overWriteStreamOnFile(terraformOutputSource, getClass().getClassLoader()
 				.getResourceAsStream(separator + "script" + separator + "exeTerraformOutput.sh"));
@@ -132,19 +114,6 @@ public class ApplicationStartup implements ApplicationListener<ContextRefreshedE
 		File terraformGitOutputSource = new File(scriptDirFile.getPath() + separator + "exeTerraformGitOutput.sh");
 		terraapputil.overWriteStreamOnFile(terraformGitOutputSource, getClass().getClassLoader()
 				.getResourceAsStream(separator + "script" + separator + "exeTerraformGitOutput.sh"));
-
-		File terraformDestroySource = new File(scriptDirFile.getPath() + separator + "exeTerraformDestroy.sh");
-		terraapputil.overWriteStreamOnFile(terraformDestroySource, getClass().getClassLoader()
-				.getResourceAsStream(separator + "script" + separator + "exeTerraformDestroy.sh"));
-
-		File halConfigSource = new File(scriptDirFile.getPath() + separator + "exeHalConfig.sh");
-		terraapputil.overWriteStreamOnFile(halConfigSource,
-				getClass().getClassLoader().getResourceAsStream(separator + "script" + separator + "exeHalConfig.sh"));
-
-		/*
-		 * log.info("In hal config is container env: " + isContainer);
-		 * HalConfigUtil.setHalConfig(halConfig(halConfigSource, isContainer));
-		 */
 
 		String configString = terraapputil.getConfig();
 		JSONObject configObject = null;

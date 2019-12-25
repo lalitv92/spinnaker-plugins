@@ -256,8 +256,6 @@ public class ApplicationStartup implements ApplicationListener<ContextRefreshedE
 					terraservice.destroyStart(extrapipelineidsrc, "", overrideVariableFilePath);
 				}
 				
-				//terraservice.destroyStart(extrapipelineidsrc, "");
-
 				JSONObject destroystatusobj = terraservice.destroyStatus("", "", "", "");
 				log.info("current destroystatusobj status :: " + destroystatusobj);
 				String applystatusstr = (String) destroystatusobj.get("status");

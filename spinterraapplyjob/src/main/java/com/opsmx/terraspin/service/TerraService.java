@@ -24,9 +24,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Map.Entry;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -36,12 +33,9 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.opsmx.terraspin.component.ApplicationStartup;
-import com.opsmx.terraspin.interfaces.Provider;
-import com.opsmx.terraspin.util.HalConfigUtil;
 import com.opsmx.terraspin.util.ProcessUtil;
 import com.opsmx.terraspin.util.TerraAppUtil;
 
@@ -70,124 +64,6 @@ public class TerraService {
 	String pipelineId = "pipelineId-" + spinpiPelineId;
 	
 	ProcessUtil processutil = new ProcessUtil();
-
-	@SuppressWarnings("unchecked")
-	public void planStart() {
-
-		log.info("in plan start:" + applicationName);
-		log.info("applicationName:" + applicationName);
-		log.info("pipelineName:" + pipelineName);
-		log.info("spincloudAccount:" + spincloudAccount);
-		log.info("pipelineId:" + pipelineId);
-
-		String halConfigString = HalConfigUtil.getHalConfig();
-		JSONObject halConfigObject = null;
-		JSONParser parser = new JSONParser();
-		try {
-			halConfigObject = (JSONObject) parser.parse(halConfigString);
-		} catch (ParseException pe) {
-			log.info(":: Exception while parsing halconfig object ::" + halConfigString);
-			throw new RuntimeException("Hal config Parse error:", pe);
-		}
-
-		File currentTerraformInfraCodeDir = terraAppUtil.createDirForPipelineId(applicationName, pipelineName,
-				pipelineId);
-
-		String statusFilePath = currentTerraformInfraCodeDir + "/planStatus";
-		File statusFile = new File(statusFilePath);
-		statusFile.delete();
-		JSONObject status = new JSONObject();
-		status.put("status", "RUNNING");
-		InputStream statusInputStream = new ByteArrayInputStream(status.toString().getBytes(StandardCharsets.UTF_8));
-		terraAppUtil.writeStreamOnFile(statusFile, statusInputStream);
-
-		Map<String, JSONObject> currentCloudProviderObj = terraAppUtil.findProviderObj(halConfigObject,
-				spincloudAccount);
-
-		Iterator<Entry<String, JSONObject>> it = currentCloudProviderObj.entrySet().iterator();
-		while (it.hasNext()) {
-			Map.Entry<String, JSONObject> entry = (Map.Entry<String, JSONObject>) it.next(); // current entry in a loop
-			String providerName = (String) entry.getKey();
-			JSONObject providerObj = (JSONObject) entry.getValue();
-			String fullPathOfProviderImplClass = "com.opsmx.terraspin.interfaces.Provider" + providerName + "Impl";
-
-			try {
-
-				Provider currentProvideObj = (Provider) Class.forName(fullPathOfProviderImplClass).newInstance();
-				currentProvideObj.serviceProviderSetting(providerObj, currentTerraformInfraCodeDir);
-
-			} catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
-				log.info("Error : cloud provider object creation");
-				throw new RuntimeException("cloud provider object creation error ", e);
-			}
-		}
-
-		terraServicePlanSetting(halConfigObject, spinGitAccount, spinPlan, spincloudAccount, true,
-				currentTerraformInfraCodeDir);
-
-		TerraformPlanThread terraOperationCall = new TerraformPlanThread(currentTerraformInfraCodeDir);
-		Thread trigger = new Thread(terraOperationCall);
-		trigger.start();
-		try {
-			trigger.join();
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
-	}
-
-	@SuppressWarnings("unchecked")
-	public JSONObject planStatus(String baseURL) {
-		String currentSatusDir = userHomeDir + "/.opsmx/spinnaker/" + applicationName + "/" + pipelineName + "/"
-				+ pipelineId + "/planStatus";
-		String planOutputURL = baseURL + "/api/v1/terraform/planOutput/" + applicationName + "/" + pipelineName + "/"
-				+ pipelineId;
-
-		JSONObject jsonObj = new JSONObject();
-		JSONParser parser = new JSONParser();
-		String statusStr = null;
-		JSONObject outputJsonObj = new JSONObject();
-
-		try {
-			jsonObj = (JSONObject) parser.parse(new FileReader(currentSatusDir));
-			statusStr = (String) jsonObj.get("status");
-			if (statusStr.equalsIgnoreCase("RUNNING")) {
-				outputJsonObj.put("status", "RUNNING");
-			} else {
-				outputJsonObj.put("status", statusStr);
-				outputJsonObj.put("planOutputURL", planOutputURL);
-				log.info("terrafor plan output json :" + outputJsonObj);
-			}
-
-		} catch (Exception e) {
-			log.info("Error : parse plan staus");
-			throw new RuntimeException("parse plan status error ", e);
-		}
-
-		return outputJsonObj;
-	}
-
-	public String planOutput(String applicationName, String pipelineName, String pipelineId, String baseURL) {
-		String currentSatusDir = userHomeDir + "/.opsmx/spinnaker/" + applicationName + "/" + pipelineName + "/"
-				+ pipelineId + "/planStatus";
-
-		JSONObject jsonObj = new JSONObject();
-		String statusStr = null;
-		JSONParser parser = new JSONParser();
-		try {
-			jsonObj = (JSONObject) parser.parse(new FileReader(currentSatusDir));
-
-			statusStr = (String) jsonObj.get("output");
-
-		} catch (Exception e) {
-			log.info("Error : parse plan out put");
-			throw new RuntimeException("parse plan output error ", e);
-		}
-		String strToR = DEMO_HTML.replace("OPTION_SCPACE", statusStr);
-		log.debug("terraform plan out put :" + strToR);
-		return strToR;
-	}
 
 	@SuppressWarnings("unchecked")
 	public String applyStart(String clonerepodir, String baseURL, String variableOverrideFile) {
@@ -322,109 +198,6 @@ public class TerraService {
 		}
 		String strToR = DEMO_HTML.replaceAll("OPTION_SCPACE", statusStr);
 		log.debug("terraform apply output :" + strToR);
-		return strToR;
-	}
-
-	@SuppressWarnings("unchecked")
-	public String destroyStart(String payload, String baseURL) {
-
-		JSONObject payloadJsonObject = null;
-		JSONParser parser = new JSONParser();
-		try {
-			payloadJsonObject = (JSONObject) parser.parse(payload);
-		} catch (Exception e) {
-			log.info("Error : terraform destroy paylaod parse");
-			throw new RuntimeException("terraform destroy paylaod parse ", e);
-		}
-		log.info("terraform destroy payload json object :: " + payloadJsonObject + "\n");
-
-		String spinApplicationName = (String) payloadJsonObject.get("applicationName");
-		String spinPipelineName = (String) payloadJsonObject.get("pipelineName");
-		String spinpiPelineId = (String) payloadJsonObject.get("pipelineId");
-		String applicationName = "applicationName-" + spinApplicationName;
-		String pipelineName = "pipelineName-" + spinPipelineName;
-		String pipelineId = "pipelineId-" + spinpiPelineId;
-
-		String planPath = System.getProperty("user.home") + "/.opsmx/spinnaker/" + applicationName + "/" + pipelineName
-				+ "/" + pipelineId;
-
-		File planPathDir = new File(planPath);
-
-		String statusFilePath = planPathDir + "/destroyStatus";
-		File statusFile = new File(statusFilePath);
-		statusFile.delete();
-		JSONObject status = new JSONObject();
-		status.put("status", "RUNNING");
-		InputStream statusInputStream = new ByteArrayInputStream(status.toString().getBytes(StandardCharsets.UTF_8));
-		terraAppUtil.writeStreamOnFile(statusFile, statusInputStream);
-
-		TerraformDestroyThread terraOperationCall = new TerraformDestroyThread(planPathDir);
-		Thread trigger = new Thread(terraOperationCall);
-		trigger.start();
-
-		String statusPollURL = baseURL + "/api/v1/terraform/destroyStatus/" + applicationName + "/" + pipelineName + "/"
-				+ pipelineId;
-
-		JSONObject outRootObj = new JSONObject();
-		outRootObj.put("statusurl", statusPollURL);
-		outRootObj.put("status", "RUNNING");
-		log.info("terraform destroy status :" + status);
-		log.debug("terrafor destroy status url :" + statusPollURL);
-		return outRootObj.toJSONString();
-
-	}
-
-	@SuppressWarnings("unchecked")
-	public String destroyStatus(String applicationName, String pipelineName, String pipelineId, String baseURL) {
-		String currentSatusDir = userHomeDir + "/.opsmx/spinnaker/" + applicationName + "/" + pipelineName + "/"
-				+ pipelineId + "/destroyStatus";
-
-		String destroyOutputURL = baseURL + "/api/v1/terraform/destroyOutput/" + applicationName + "/" + pipelineName
-				+ "/" + pipelineId;
-
-		JSONObject jsonObj = new JSONObject();
-		JSONParser parser = new JSONParser();
-		String statusStr = null;
-		JSONObject outputJsonObj = new JSONObject();
-
-		try {
-			jsonObj = (JSONObject) parser.parse(new FileReader(currentSatusDir));
-			statusStr = (String) jsonObj.get("status");
-			if (statusStr.equalsIgnoreCase("RUNNING")) {
-				outputJsonObj.put("status", "RUNNING");
-			} else {
-				outputJsonObj.put("status", statusStr);
-				outputJsonObj.put("destroyOutputURL", destroyOutputURL);
-				log.info("terraform destroy status :" + outputJsonObj);
-			}
-
-		} catch (Exception e) {
-			log.info("Error : terraform destroy status");
-			throw new RuntimeException("Error : terraform destroy status ", e);
-		}
-
-		return outputJsonObj.toJSONString();
-	}
-
-	public String destroyOutput(String applicationName, String pipelineName, String pipelineId, String baseURL) {
-
-		String currentSatusDir = userHomeDir + "/.opsmx/spinnaker/" + applicationName + "/" + pipelineName + "/"
-				+ pipelineId + "/destroyStatus";
-
-		JSONObject jsonObj = new JSONObject();
-		String statusStr = null;
-		JSONParser parser = new JSONParser();
-		try {
-			jsonObj = (JSONObject) parser.parse(new FileReader(currentSatusDir));
-
-			statusStr = (String) jsonObj.get("output");
-
-		} catch (Exception e) {
-			log.info("Error : terraform destroy ouput");
-			throw new RuntimeException("Error : terraform destroy output ", e);
-		}
-		String strToR = DEMO_HTML.replaceAll("OPTION_SCPACE", statusStr);
-		log.debug("terraform destroy output :" + strToR);
 		return strToR;
 	}
 

@@ -24,6 +24,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 
+import org.apache.commons.lang3.StringUtils;
 import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,13 +35,18 @@ class TerraformDestroyThread implements Runnable {
 
 	private static final Logger log = LoggerFactory.getLogger(TerraformDestroyThread.class);
 	
-	private File file;
+	private File tfRootModulepath;
+	private File planstatusfileDir;	
+	private String variableOverrideFile; 
 
 	public TerraformDestroyThread() {
 	}
 
-	public TerraformDestroyThread(File file) {
-		this.file = file;
+	public TerraformDestroyThread(File tfRootModulepath, File planstatusfileDir, String variableOverridefile) {
+
+		this.tfRootModulepath = tfRootModulepath;
+		this.planstatusfileDir = planstatusfileDir;
+		this.variableOverrideFile = variableOverridefile;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -52,10 +58,19 @@ class TerraformDestroyThread implements Runnable {
 		TerraAppUtil terraAppUtil = new TerraAppUtil();
 		Process exec;
 		try {
-			exec = Runtime.getRuntime().exec(
-					new String[] { "/bin/sh", "-c", "printf 'yes' | sh " + deleteScriptPath + " " + file.getPath() });
-			exec.waitFor();
-
+			
+			if(StringUtils.isEmpty(variableOverrideFile)) {
+				exec = Runtime.getRuntime().exec(new String[] { "/bin/sh", "-c",
+						"printf 'yes' | sh " + deleteScriptPath + " " + tfRootModulepath.getPath() });
+				exec.waitFor();
+				
+			}else {
+				
+				exec = Runtime.getRuntime().exec(new String[] { "/bin/sh", "-c",
+						"printf 'yes' | sh " + deleteScriptPath + " " + tfRootModulepath.getPath() + " " + variableOverrideFile });
+				exec.waitFor();
+			}
+	
 			BufferedReader reader = new BufferedReader(new InputStreamReader(exec.getInputStream()));
 			String line = "";
 			String tempLine = "";
@@ -83,7 +98,7 @@ class TerraformDestroyThread implements Runnable {
 				log.info("terraform destroy script error stream : "+line2);
 			}
 
-			String filePath = file.getPath() + "/destroyStatus";
+			String filePath = planstatusfileDir.getPath() + "/destroyStatus";
 			File statusFile = new File(filePath);
 			InputStream statusInputStream = new ByteArrayInputStream(
 					statusRootObj.toString().getBytes(StandardCharsets.UTF_8));
@@ -97,11 +112,11 @@ class TerraformDestroyThread implements Runnable {
 	}
 
 	public File getFile() {
-		return file;
+		return tfRootModulepath;
 	}
 
 	public void setFile(File file) {
-		this.file = file;
+		this.tfRootModulepath = file;
 	}
 
 }

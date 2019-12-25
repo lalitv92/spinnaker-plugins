@@ -69,19 +69,24 @@ public class ApplicationStartup implements ApplicationListener<ContextRefreshedE
 
 		String currentUserDir = System.getProperty("user.home");
 		String spinPlan = System.getenv("plan");
-		String spinGitAccount = System.getenv("gitAccount");
-		String spincloudAccount = System.getenv("cloudAccount");
+		String spinArtifactAccount = System.getenv("artifactAccount");
+		// String spincloudAccount = System.getenv("cloudAccount");
 		String spinStateRepo = System.getenv("stateRepo");
+		String tfVariableOverrideFileRepo = System.getenv("variableOverrideFileRepo");
+		String uuId = System.getenv("uuId");
 
 		log.info("current user :: " + System.getProperty("user.name") + " and user dir :: "
 				+ System.getProperty("user.home"));
 		log.info("spinPlan:" + spinPlan);
-		log.info("spinGitAccount:" + spinGitAccount);
-		log.info("spincloudAccount:" + spincloudAccount);
+		log.info("spinArtifactAccount:" + spinArtifactAccount);
+		// log.info("spincloudAccount:" + spincloudAccount);
 		log.info("spinStateRepo:" + spinStateRepo);
+		log.info("uuId:" + uuId);
 
 		String spinStateRepoName = spinStateRepo.trim().split(".git")[0];
-		String staterepodir = currentUserDir + "/" + spinStateRepoName;
+		String tfVariableOverrideFileRepoName = tfVariableOverrideFileRepo.trim().split(".git")[0];
+		String tfVariableOverrideFileName = tfVariableOverrideFileRepo.trim().split("//")[1];
+		String staterepoDirPath = currentUserDir + "/" + spinStateRepoName;
 
 		TerraAppUtil terraapputil = new TerraAppUtil();
 		TerraService terraservice = new TerraService();
@@ -121,143 +126,208 @@ public class ApplicationStartup implements ApplicationListener<ContextRefreshedE
 		terraapputil.overWriteStreamOnFile(halConfigSource,
 				getClass().getClassLoader().getResourceAsStream(separator + "script" + separator + "exeHalConfig.sh"));
 
-		log.info("In hal config is container env :: " + isContainer);
-		HalConfigUtil.setHalConfig(halConfig(halConfigSource, isContainer));
+		/*
+		 * log.info("In hal config is container env :: " + isContainer);
+		 * HalConfigUtil.setHalConfig(halConfig(halConfigSource, isContainer));
+		 */
 
-		// plan start
-		terraservice.planStart();
-
-		String halConfigString = HalConfigUtil.getHalConfig();
-		JSONObject halConfigObject = null;
+		String configString = terraapputil.getConfig();
+		JSONObject configObject = null;
 		try {
-			halConfigObject = (JSONObject) parser.parse(halConfigString);
+			configObject = (JSONObject) parser.parse(configString);
 		} catch (ParseException pe) {
-			log.info("Exception while parsing halconfig object :: " + halConfigString);
-			throw new RuntimeException("Hal config Parse error:", pe);
+			log.info("Exception while parsing config object :: " + configString);
+			throw new RuntimeException("config Parse error:", pe);
 		}
 
-		JSONArray githubArtifactAccounts = (JSONArray) ((JSONObject) ((JSONObject) halConfigObject.get("artifacts"))
-				.get("github")).get("accounts");
-		JSONObject githubArtifactAccount = null;
+		JSONArray artifactAccounts = (JSONArray) configObject.get("artifactaccounts");
+		JSONObject artifactAccount = null;
 
-		for (int i = 0; i < githubArtifactAccounts.size(); i++) {
-			githubArtifactAccount = (JSONObject) githubArtifactAccounts.get(i);
-			String githubArtifactaccountName = (String) githubArtifactAccount.get("name");
-			if (StringUtils.equalsIgnoreCase(githubArtifactaccountName.trim(), spincloudAccount.trim()))
+		for (int i = 0; i < artifactAccounts.size(); i++) {
+			artifactAccount = (JSONObject) artifactAccounts.get(i);
+			String artifactaccountName = (String) artifactAccount.get("accountname");
+			if (StringUtils.equalsIgnoreCase(artifactaccountName.trim(), spinArtifactAccount.trim()))
 				break;
 		}
-		String gitUser = (String) githubArtifactAccount.get("username");
-		String gittoken = (String) githubArtifactAccount.get("token");
-		String gitPass = (String) githubArtifactAccount.get("password");
 
-		String checkrepopresentcommand = "curl -u GITUSER:GITPASS https://api.github.com/GITUSER/REPONAME";
-		String gitclonecommand = "git clone https://GITUSER:GITPASS@github.com/GITUSER/REPONAME";
+		if (!artifactAccount.isEmpty()) {
 
-		if (StringUtils.isNoneEmpty(gitPass)) {
-			checkrepopresentcommand = checkrepopresentcommand.replaceAll("GITUSER", gitUser)
-					.replaceAll("GITPASS", gitPass).replaceAll("REPONAME", spinStateRepo);
-			gitclonecommand = gitclonecommand.replaceAll("GITUSER", gitUser).replaceAll("GITPASS", gitPass)
-					.replaceAll("REPONAME", spinStateRepo);
-		} else {
-			checkrepopresentcommand = checkrepopresentcommand.replaceAll("GITUSER", gitUser)
-					.replaceAll("GITPASS", gittoken).replaceAll("REPONAME", spinStateRepo);
-			gitclonecommand = gitclonecommand.replaceAll("GITUSER", gitUser).replaceAll("GITPASS", gittoken)
-					.replaceAll("REPONAME", spinStateRepo);
-		}
+			String gitUser = (String) artifactAccount.get("username");
+			String gittoken = (String) artifactAccount.get("token");
+			String gitPass = (String) artifactAccount.get("password");
 
-		JSONObject planstatusobj = terraservice.planStatus("");
-		log.info("----- current plan status :: " + planstatusobj);
-		String planstatusstr = (String) planstatusobj.get("status");
+			String checkTfFileStateRepoPresentCommand = "curl -u GITUSER:GITPASS https://api.github.com/GITUSER/REPONAME";
+			String tfFileStateRepoGitCloneCommand = "git clone https://GITUSER:GITPASS@github.com/GITUSER/REPONAME";
 
-		if (StringUtils.equalsIgnoreCase("SUCCESS", planstatusstr)) {
+			String checkTfVariableOverrideFileRepoPresentCommand = "curl -u GITUSER:GITPASS https://api.github.com/GITUSER/REPONAME";
+			String tfVariableOverrideFileGitCloneCommand = "git clone https://GITUSER:GITPASS@github.com/GITUSER/REPONAME";
 
-			boolean isrepopresent = processutil.runcommand(checkrepopresentcommand);
-			log.info("checking is repo present :: " + isrepopresent);
+			if (StringUtils.isNoneEmpty(gitPass)) {
+				checkTfFileStateRepoPresentCommand = checkTfFileStateRepoPresentCommand.replaceAll("GITUSER", gitUser)
+						.replaceAll("GITPASS", gitPass).replaceAll("REPONAME", spinStateRepo);
+				tfFileStateRepoGitCloneCommand = tfFileStateRepoGitCloneCommand.replaceAll("GITUSER", gitUser)
+						.replaceAll("GITPASS", gitPass).replaceAll("REPONAME", spinStateRepo);
 
-			if (isrepopresent) {
-				boolean isgitcloned = processutil.runcommandwithindir(gitclonecommand, currentUserDir);
-				log.info("is repo cloned :: " + isgitcloned);
+				checkTfVariableOverrideFileRepoPresentCommand = checkTfFileStateRepoPresentCommand
+						.replaceAll("GITUSER", gitUser).replaceAll("GITPASS", gitPass)
+						.replaceAll("REPONAME", tfVariableOverrideFileRepoName);
+				tfVariableOverrideFileGitCloneCommand = tfFileStateRepoGitCloneCommand.replaceAll("GITUSER", gitUser)
+						.replaceAll("GITPASS", gitPass).replaceAll("REPONAME", tfVariableOverrideFileRepoName);
 
-				if (isgitcloned) {
-					String source1 = "/home/terraspin/" + spinStateRepoName + "/.git";
-					File srcDir1 = new File(source1);
-					String destination1 = "/home/terraspin/extra";
-					File destDir1 = new File(destination1);
+			} else {
+				checkTfFileStateRepoPresentCommand = checkTfFileStateRepoPresentCommand.replaceAll("GITUSER", gitUser)
+						.replaceAll("GITPASS", gittoken).replaceAll("REPONAME", spinStateRepo);
+				tfFileStateRepoGitCloneCommand = tfFileStateRepoGitCloneCommand.replaceAll("GITUSER", gitUser)
+						.replaceAll("GITPASS", gittoken).replaceAll("REPONAME", spinStateRepo);
 
-					try {
-						FileUtils.copyDirectoryToDirectory(srcDir1, destDir1);
-					} catch (IOException e) {
-						e.printStackTrace();
+				checkTfVariableOverrideFileRepoPresentCommand = checkTfFileStateRepoPresentCommand
+						.replaceAll("GITUSER", gitUser).replaceAll("GITPASS", gittoken)
+						.replaceAll("REPONAME", tfVariableOverrideFileRepoName);
+				tfVariableOverrideFileGitCloneCommand = tfFileStateRepoGitCloneCommand.replaceAll("GITUSER", gitUser)
+						.replaceAll("GITPASS", gittoken).replaceAll("REPONAME", tfVariableOverrideFileRepoName);
+			}
+
+			if (StringUtils.isEmpty(tfVariableOverrideFileRepo)) {
+				// plan start
+				terraservice.planStart(artifactAccount, null);
+
+			} else {
+				// plan start
+				boolean isOverrideVariableFileRepoPresent = processutil
+						.runcommand(checkTfVariableOverrideFileRepoPresentCommand);
+				log.info("checking is variable overide file repo present :: " + isOverrideVariableFileRepoPresent);
+
+				if (isOverrideVariableFileRepoPresent) {
+
+					String overrideVariableFiledestination = "/home/terraspin/extra";
+
+					boolean isOverrideVariableRepoGitcloned = processutil.runcommandwithindir(
+							tfVariableOverrideFileGitCloneCommand, overrideVariableFiledestination);
+					log.info("is overide variable file git repo cloned :: " + isOverrideVariableRepoGitcloned);
+
+					if (isOverrideVariableRepoGitcloned) {
+						String overrideVariableFilePath = overrideVariableFiledestination + "/"
+								+ tfVariableOverrideFileRepoName + "/" + tfVariableOverrideFileName;
+						terraservice.planStart(artifactAccount, overrideVariableFilePath);
+
+					} else {
+						log.info("error : " + processutil.getStatusRootObj());
 					}
+				} else {
+					log.info("error : " + processutil.getStatusRootObj());
+				}
+			}
 
-					File staterepoDir = new File(staterepodir);
+			JSONObject planstatusobj = terraservice.planStatus("");
+			log.info("----- current plan status :: " + planstatusobj);
+			String planstatusstr = (String) planstatusobj.get("status");
 
-					try {
-						FileUtils.cleanDirectory(staterepoDir);
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
+			if (StringUtils.equalsIgnoreCase("SUCCESS", planstatusstr)) {
 
-					String source2 = "/home/terraspin/.opsmx/spinnaker/applicationName-spinApp/pipelineName-spinPipe/pipelineId-spinPipeId";
-					File srcDir2 = new File(source2);
-					String destination2 = staterepodir;
-					File destDir2 = new File(destination2);
+				boolean isStateRepoPresent = processutil.runcommand(checkTfFileStateRepoPresentCommand);
+				log.info("checking is state repo present :: " + isStateRepoPresent);
 
-					try {
-						FileUtils.copyDirectoryToDirectory(srcDir2, destDir2);
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
+				if (isStateRepoPresent) {
+					boolean isStateRepoGitcloned = processutil.runcommandwithindir(tfFileStateRepoGitCloneCommand,
+							currentUserDir);
+					log.info("is state repo cloned :: " + isStateRepoGitcloned);
 
-					String source3 = "/home/terraspin/extra/.git";
-					File srcDir3 = new File(source3);
-					String destination3 = staterepodir;
-					File destDir3 = new File(destination3);
+					if (isStateRepoGitcloned) {
+						String source1 = "/home/terraspin/" + spinStateRepoName + "/.git";
+						File srcDir1 = new File(source1);
+						String destination1 = "/home/terraspin/extra";
+						File destDir1 = new File(destination1);
 
-					try {
-						FileUtils.copyDirectoryToDirectory(srcDir3, destDir3);
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
+						try {
+							FileUtils.copyDirectoryToDirectory(srcDir1, destDir1);
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
 
-					String zippath = staterepodir + "/pipelineId-spinPipeId.zip";
-					String srczippath = staterepodir + "/pipelineId-spinPipeId";
-					try {
-						ziputil.zipDirectory(srczippath, zippath);
-					} catch (IOException e1) {
-						// TODO Auto-generated catch block
-						e1.printStackTrace();
-					}
+						File staterepoDir = new File(staterepoDirPath);
 
-					String gitconfigusernamecommand = "git config --global user.name \"OpsMx\"";
-					boolean isgitconfigusernamecommandsuccess = processutil
-							.runcommandwithindir(gitconfigusernamecommand, staterepodir);
-					log.info("isgitconfigusername command got success :: " + isgitconfigusernamecommandsuccess);
-					//log.info("error :: " + processutil.getStatusRootObj());
+						try {
+							FileUtils.cleanDirectory(staterepoDir);
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
 
-					String gitconfiguseremailcommand = "git config --global user.email \"Team@OpsMx.com\"";
-					boolean isconfiguseremailcommandsuccess = processutil.runcommandwithindir(gitconfiguseremailcommand,
-							staterepodir);
-					log.info("isconfiguseremailcommand got success :: " + isconfiguseremailcommandsuccess);
-					//log.info("error :: " + processutil.getStatusRootObj());
+						String source2 = "/home/terraspin/.opsmx/spinnaker/applicationName-spinApp/pipelineName-spinPipe/pipelineId-spinPipeId";
+						File srcDir2 = new File(source2);
+						String destination2 = staterepoDirPath;
+						File destDir2 = new File(destination2);
 
-					String gitaddcommand = "git add .";
-					boolean isgitaddcommandsuccess = processutil.runcommandwithindir(gitaddcommand, staterepodir);
-					log.info("isgitadd command got success :: " + isconfiguseremailcommandsuccess);
+						try {
+							FileUtils.copyDirectoryToDirectory(srcDir2, destDir2);
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
 
-					if (isgitaddcommandsuccess) {
-						String gitcommitcommand = "git commit -m \"adding spinterra plan state\"";
-						boolean isgitcommitcommandsuccess = processutil.runcommandwithindir(gitcommitcommand,
-								staterepodir);
-						log.info("isgitcommit command got success :: " + isgitcommitcommandsuccess);
+						String source3 = "/home/terraspin/extra/.git";
+						File srcDir3 = new File(source3);
+						String destination3 = staterepoDirPath;
+						File destDir3 = new File(destination3);
 
-						if (isgitcommitcommandsuccess) {
-							String gitpushcommand = "git push -u origin master";
-							boolean isgitpushcommandsuccess = processutil.runcommandwithindir(gitpushcommand,
-									staterepodir);
+						try {
+							FileUtils.copyDirectoryToDirectory(srcDir3, destDir3);
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
 
-							if (isgitpushcommandsuccess) {
-								log.info("gitpushcommand got success : ");
+						/*
+						 * String zippath = staterepoDirPath + "/pipelineId-spinPipeId.zip"; String
+						 * srczippath = staterepoDirPath + "/pipelineId-spinPipeId";
+						 */
+
+						String zippath = staterepoDirPath + "/" + uuId.trim() + ".zip";
+						String srczippath = staterepoDirPath + "/pipelineId-spinPipeId";
+
+						try {
+							ziputil.zipDirectory(srczippath, zippath);
+						} catch (IOException e1) {
+							// TODO Auto-generated catch block
+							e1.printStackTrace();
+						}
+
+						try {
+							FileUtils.deleteDirectory(new File(srczippath));
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
+
+						String gitconfigusernamecommand = "git config --global user.name \"OpsMx\"";
+						boolean isgitconfigusernamecommandsuccess = processutil
+								.runcommandwithindir(gitconfigusernamecommand, staterepoDirPath);
+						log.info("isgitconfigusername command got success :: " + isgitconfigusernamecommandsuccess);
+						// log.info("error :: " + processutil.getStatusRootObj());
+
+						String gitconfiguseremailcommand = "git config --global user.email \"Team@OpsMx.com\"";
+						boolean isconfiguseremailcommandsuccess = processutil
+								.runcommandwithindir(gitconfiguseremailcommand, staterepoDirPath);
+						log.info("isconfiguseremailcommand got success :: " + isconfiguseremailcommandsuccess);
+						// log.info("error :: " + processutil.getStatusRootObj());
+
+						String gitaddcommand = "git add .";
+						boolean isgitaddcommandsuccess = processutil.runcommandwithindir(gitaddcommand,
+								staterepoDirPath);
+						log.info("isgitadd command got success :: " + isconfiguseremailcommandsuccess);
+
+						if (isgitaddcommandsuccess) {
+							String gitcommitcommand = "git commit -m \"adding spinterra plan state\"";
+							boolean isgitcommitcommandsuccess = processutil.runcommandwithindir(gitcommitcommand,
+									staterepoDirPath);
+							log.info("isgitcommit command got success :: " + isgitcommitcommandsuccess);
+
+							if (isgitcommitcommandsuccess) {
+								String gitpushcommand = "git push -u origin master";
+								boolean isgitpushcommandsuccess = processutil.runcommandwithindir(gitpushcommand,
+										staterepoDirPath);
+
+								if (isgitpushcommandsuccess) {
+									log.info("gitpushcommand got success : ");
+								} else {
+									log.info("error : " + processutil.getStatusRootObj());
+								}
 							} else {
 								log.info("error : " + processutil.getStatusRootObj());
 							}
@@ -273,8 +343,10 @@ public class ApplicationStartup implements ApplicationListener<ContextRefreshedE
 			} else {
 				log.info("error : " + processutil.getStatusRootObj());
 			}
+
 		} else {
-			log.info("error : " + processutil.getStatusRootObj());
+
+			log.info("artifact config is not present:");
 		}
 	}
 
@@ -341,7 +413,7 @@ public class ApplicationStartup implements ApplicationListener<ContextRefreshedE
 			}
 
 		}
-		//log.info("hal config Object :: " + halConfigRootObj);
+		// log.info("hal config Object :: " + halConfigRootObj);
 		return halConfigRootObj.toJSONString();
 	}
 

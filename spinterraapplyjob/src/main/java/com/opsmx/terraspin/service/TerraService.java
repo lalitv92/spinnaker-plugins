@@ -51,6 +51,7 @@ public class TerraService {
 	private static final Logger log = LoggerFactory.getLogger(TerraService.class);
 
 	ApplicationStartup ApplicationStartup = new ApplicationStartup();
+	JSONParser parser = new JSONParser();
 	/*
 	 * @Autowired TerraAppUtil terraAppUtil1;
 	 */
@@ -189,7 +190,7 @@ public class TerraService {
 	}
 
 	@SuppressWarnings("unchecked")
-	public String applyStart(String clonerepodir, String baseURL) {
+	public String applyStart(String clonerepodir, String baseURL, String variableOverrideFile) {
 
 		File currentTerraformInfraCodeDir = terraAppUtil.createDirForPipelineId(applicationName, pipelineName,
 				pipelineId);
@@ -222,7 +223,25 @@ public class TerraService {
 		boolean ischangemod = processutil.runcommand("chmod 777 -R " + destination);
 		log.info("-----ischangemod status ----" + ischangemod);
 		
-		TerraformApplyThread terraOperationCall = new TerraformApplyThread(planPathDir);
+		String tfModulejsonpath = currentTerraformInfraCodeDir + ".terraform/modules/modules.json";
+		String tfModulejson = terraAppUtil.getStrJson(tfModulejsonpath);
+		
+		
+		JSONObject moduleConfigObject = null;
+		try {
+			moduleConfigObject = (JSONObject) parser.parse(tfModulejson);
+		} catch (ParseException pe) {
+			log.info("Exception while parsing  tf module json :: " + tfModulejson);
+			throw new RuntimeException("config Parse error:", pe);
+		}
+		
+		String tfModuledir = (String) moduleConfigObject.get("Dir");
+		String tfRootModule = (String) moduleConfigObject.get("Root");
+		
+		String exacttfRootModuleFilePathinStr = currentTerraformInfraCodeDir + tfModuledir + "/" + tfRootModule;
+		File exacttfRootModuleFilePathdir = new File(exacttfRootModuleFilePathinStr);
+		
+		TerraformApplyThread terraOperationCall = new TerraformApplyThread(exacttfRootModuleFilePathdir,planPathDir,variableOverrideFile);
 		Thread trigger = new Thread(terraOperationCall);
 		trigger.start();
 

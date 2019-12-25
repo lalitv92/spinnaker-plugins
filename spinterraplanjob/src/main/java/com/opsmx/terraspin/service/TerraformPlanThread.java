@@ -25,6 +25,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 
+import org.apache.commons.lang3.StringUtils;
 import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,15 +36,19 @@ class TerraformPlanThread implements Runnable {
 
 	private static final Logger log = LoggerFactory.getLogger(TerraformPlanThread.class);
 	
-	private File file;	
+	private File tfRootModulepath;
+	private File planstatusfileDir;	
+	private String variableOverrideFile; 
 	
 	public TerraformPlanThread() {
 		
 	}
 
-	public TerraformPlanThread(File file) {
+	public TerraformPlanThread(File tfRootModulepath, File planstatusfileDir, String variableOverridefile) {
 
-		this.file = file;
+		this.tfRootModulepath = tfRootModulepath;
+		this.planstatusfileDir = planstatusfileDir;
+		this.variableOverrideFile = variableOverridefile;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -54,9 +59,18 @@ class TerraformPlanThread implements Runnable {
 		TerraAppUtil terraAppUtil = new TerraAppUtil();
 		Process exec;
 		try {
-			exec = Runtime.getRuntime().exec(new String[] { "/bin/sh", "-c",
-					"printf 'yes' | sh " + planScriptPath + " " + file.getPath() });
-			exec.waitFor();
+			
+			if(StringUtils.isEmpty(variableOverrideFile)) {
+				exec = Runtime.getRuntime().exec(new String[] { "/bin/sh", "-c",
+						"printf 'yes' | sh " + planScriptPath + " " + tfRootModulepath.getPath() });
+				exec.waitFor();
+				
+			}else {
+				
+				exec = Runtime.getRuntime().exec(new String[] { "/bin/sh", "-c",
+						"printf 'yes' | sh " + planScriptPath + " " + tfRootModulepath.getPath() + " " + variableOverrideFile });
+				exec.waitFor();
+			}
 
 			BufferedReader reader = new BufferedReader(new InputStreamReader(exec.getInputStream()));
 			String line = "";
@@ -85,7 +99,7 @@ class TerraformPlanThread implements Runnable {
 				log.info("terraform plan script error stream : "+line2);
 			}
 
-			String filePath = file.getPath() + "/planStatus";
+			String filePath = planstatusfileDir.getPath() + "/planStatus";
 			File statusFile = new File(filePath);
 			InputStream statusInputStream = new ByteArrayInputStream(
 					statusRootObj.toString().getBytes(StandardCharsets.UTF_8));
@@ -98,11 +112,11 @@ class TerraformPlanThread implements Runnable {
 	}
 
 	public File getFile() {
-		return file;
+		return tfRootModulepath;
 	}
 
 	public void setFile(File file) {
-		this.file = file;
+		this.tfRootModulepath = file;
 	}
 
 }

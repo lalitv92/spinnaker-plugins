@@ -20,13 +20,18 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
 import org.json.simple.JSONArray;
@@ -205,5 +210,36 @@ public class TerraAppUtil {
 		return rootMapObj;
 	}
 
+	
+	public String getConfig() {
+		StringBuilder contentBuilder = new StringBuilder();
+		try (Stream<String> stream = Files.lines(Paths.get("/home/terraspin/opsmx/app/artifactaccounts.json"),
+				StandardCharsets.UTF_8))
+
+		{
+			stream.forEach(s -> contentBuilder.append(s).append("\n"));
+		} catch (IOException e) {
+			log.info("error in parsing json file! path : '/home/terraspin/opsmx/app/artifactaccounts.json' .");
+			e.printStackTrace();
+		}
+		log.info("current config :" + contentBuilder.toString());
+		return contentBuilder.toString();
+	}
+	
+	
+	public String getStrJson(String path) {
+		StringBuilder contentBuilder = new StringBuilder();
+		try (Stream<String> stream = Files.lines(Paths.get(path),StandardCharsets.UTF_8))
+
+		{
+			stream.forEach(s -> contentBuilder.append(s).append("\n"));
+		} catch (IOException e) {
+			log.info("error in parsing json file! path : '"+ path +"\' .");
+			e.printStackTrace();
+		}
+		log.info("current config :" + contentBuilder.toString());
+		return contentBuilder.toString();
+	}
+	
 	public static void main(String... args) {}
 }

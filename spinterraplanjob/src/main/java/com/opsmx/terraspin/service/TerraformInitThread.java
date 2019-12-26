@@ -51,21 +51,26 @@ class TerraformInitThread implements Runnable {
 	@SuppressWarnings("unchecked")
 	@Override
 	public void run() {
-		String planScriptPath = System.getProperty("user.home") + "/.opsmx/script/exeTerraformInit.sh";
-		log.info("terraform plan script path : "+planScriptPath);
+		String initScriptPath = System.getProperty("user.home") + "/.opsmx/script/exeTerraformInit.sh";
+		log.info("terraform plan script path : "+initScriptPath);
+		log.info("tfFilesDir: "+ tfFilesDir);
+		log.info("variableOverrideFile: "+ variableOverrideFile);
+		
 		TerraAppUtil terraAppUtil = new TerraAppUtil();
 		Process exec;
 		try {
 			
 			if(StringUtils.isEmpty(variableOverrideFile)) {
+				log.info("In non variable override ");
+				
 				exec = Runtime.getRuntime().exec(new String[] { "/bin/sh", "-c",
-						"printf 'yes' | sh " + planScriptPath + " " + tfFilesDir.getPath() });
+						"printf 'yes' | sh " + initScriptPath + " " + tfFilesDir.getPath() });
 				exec.waitFor();
 				
 			}else {
-				
+				log.info("In variable override ");
 				exec = Runtime.getRuntime().exec(new String[] { "/bin/sh", "-c",
-						"printf 'yes' | sh " + planScriptPath + " " + tfFilesDir.getPath() + " " + variableOverrideFile });
+						"printf 'yes' | sh " + initScriptPath + " " + tfFilesDir.getPath() + " " + variableOverrideFile });
 				exec.waitFor();
 			}
 

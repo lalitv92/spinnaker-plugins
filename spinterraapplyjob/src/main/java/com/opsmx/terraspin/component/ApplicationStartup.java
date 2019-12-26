@@ -16,14 +16,8 @@
 
 package com.opsmx.terraspin.component;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.stream.Stream;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -39,7 +33,6 @@ import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.stereotype.Component;
 
 import com.opsmx.terraspin.service.TerraService;
-import com.opsmx.terraspin.util.HalConfigUtil;
 import com.opsmx.terraspin.util.ProcessUtil;
 import com.opsmx.terraspin.util.TerraAppUtil;
 import com.opsmx.terraspin.util.ZipUtil;
@@ -79,14 +72,14 @@ public class ApplicationStartup implements ApplicationListener<ContextRefreshedE
 				+ System.getProperty("user.home"));
 		log.info("spinPlan:" + spinPlan);
 		log.info("spinArtifactAccount:" + spinArtifactAccount);
-		// log.info("spincloudAccount:" + spincloudAccount);
+		log.info("tfVariableOverrideFileRepo:" + tfVariableOverrideFileRepo);
 		log.info("spinStateRepo:" + spinStateRepo);
 		log.info("uuId:" + uuId);
 
 		String spinStateRepoName = spinStateRepo.trim().split(".git")[0];
-		String tfVariableOverrideFileRepoName = tfVariableOverrideFileRepo.trim().split(".git")[0];
-		String tfVariableOverrideFileName = tfVariableOverrideFileRepo.trim().split("//")[1];
 		String staterepoDirPath = currentUserDir + "/" + spinStateRepoName;
+		String tfVariableOverrideFileRepoName = new String();
+		String tfVariableOverrideFileName = new String();
 
 		TerraAppUtil terraapputil = new TerraAppUtil();
 		TerraService terraservice = new TerraService();
@@ -129,13 +122,18 @@ public class ApplicationStartup implements ApplicationListener<ContextRefreshedE
 
 		for (int i = 0; i < artifactAccounts.size(); i++) {
 			artifactAccount = (JSONObject) artifactAccounts.get(i);
-			String githubArtifactaccountName = (String) artifactAccount.get("name");
+			String githubArtifactaccountName = (String) artifactAccount.get("accountname");
 			if (StringUtils.equalsIgnoreCase(githubArtifactaccountName.trim(), spinArtifactAccount.trim()))
 				break;
 		}
 		String gitUser = (String) artifactAccount.get("username");
 		String gittoken = (String) artifactAccount.get("token");
 		String gitPass = (String) artifactAccount.get("password");
+		
+		if (!StringUtils.isEmpty(tfVariableOverrideFileRepo)) {
+			tfVariableOverrideFileRepoName = tfVariableOverrideFileRepo.trim().split(".git")[0];
+			tfVariableOverrideFileName = tfVariableOverrideFileRepo.trim().split("//")[1];
+		}
 
 		String checkTfFileStateRepoPresentCommand = "curl -u GITUSER:GITPASS https://api.github.com/GITUSER/REPONAME";
 		String tfFileStateRepoGitCloneCommand = "git clone https://GITUSER:GITPASS@github.com/GITUSER/REPONAME";
@@ -173,7 +171,7 @@ public class ApplicationStartup implements ApplicationListener<ContextRefreshedE
 				.runcommand(checkTfVariableOverrideFileRepoPresentCommand);
 		log.info("checking is variable overide file repo present :: " + isOverrideVariableFileRepoPresent);
 
-		if (isOverrideVariableFileRepoPresent) {
+		if (isOverrideVariableFileRepoPresent && !StringUtils.isEmpty(tfVariableOverrideFileRepo)) {
 
 			String overrideVariableFiledestination = "/home/terraspin/extra";
 			boolean isOverrideVariableRepoGitcloned = processutil
@@ -195,7 +193,7 @@ public class ApplicationStartup implements ApplicationListener<ContextRefreshedE
 		boolean isrepopresent = processutil.runcommand(checkTfFileStateRepoPresentCommand);
 		log.info("checking is state repo present :: " + isrepopresent);
 
-		if (isrepopresent) {
+		if (isrepopresent && !StringUtils.isEmpty(spinStateRepo)) {
 			boolean isgitcloned = processutil.runcommandwithindir(tfFileStateRepoGitCloneCommand, currentUserDir);
 			log.info("is repo cloned :: " + isgitcloned);
 

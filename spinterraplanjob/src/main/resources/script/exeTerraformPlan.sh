@@ -11,8 +11,10 @@ echo In shell script path :: $planDir
 
 if [ $# -eq 2 ] 
 then
+   terraform init -var-file=$variablefile -no-color
    terraform plan -var-file=$variablefile -no-color
 else
+   terraform init -no-color
    terraform plan -no-color 
 fi
 

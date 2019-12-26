@@ -213,13 +213,13 @@ public class TerraAppUtil {
 	
 	public String getConfig() {
 		StringBuilder contentBuilder = new StringBuilder();
-		try (Stream<String> stream = Files.lines(Paths.get("/home/terraspin/opsmx/app/artifactaccounts.json"),
+		try (Stream<String> stream = Files.lines(Paths.get("/home/terraspin/opsmx/app/config/artifactaccounts.json"),
 				StandardCharsets.UTF_8))
 
 		{
 			stream.forEach(s -> contentBuilder.append(s).append("\n"));
 		} catch (IOException e) {
-			log.info("error in parsing json file! path : '/home/terraspin/opsmx/app/artifactaccounts.json' .");
+			log.info("error in parsing json file! path : '/home/terraspin/opsmx/app/config/artifactaccounts.json' .");
 			e.printStackTrace();
 		}
 		log.info("current config :" + contentBuilder.toString());

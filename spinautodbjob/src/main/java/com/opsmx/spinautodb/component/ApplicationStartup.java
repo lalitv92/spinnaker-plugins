@@ -66,22 +66,6 @@ public class ApplicationStartup implements ApplicationListener<ContextRefreshedE
 		log.info("artifactaccount:" + artifactaccount);
 		log.info("dbscript:" + dbscript);
 		
-		/*
-		 * log.info(""); String opsmxdir = currentUserDir + separator + ".opsmx"; File
-		 * opsmxDirFile = new File(opsmxdir); if (!opsmxDirFile.exists())
-		 * opsmxDirFile.mkdir();
-		 * 
-		 * File scriptDirFile = new File(opsmxDirFile.getPath() + separator +
-		 * "dbscript"); if (!scriptDirFile.exists()) scriptDirFile.mkdir();
-		 
-
-		File migrationDBSourceFile = new File(scriptDirFile.getPath() + separator + "migrationdb.sql");
-		tu.overWriteStreamOnFile(migrationDBSourceFile,
-				new ByteArrayInputStream(dbscript.getBytes(StandardCharsets.UTF_8)));
-
-		log.info("");
-		*/
-		
 		JSONObject currentartifactConfigObj = getArtifactAccountConfig(artifactaccount);
 		String artifactaccountName = (String) currentartifactConfigObj.get("accountname");
 		String artifactType = (String) currentartifactConfigObj.get("artifacttype");

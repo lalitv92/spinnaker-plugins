@@ -16,7 +16,6 @@
 
 package com.opsmx.terraspin.util;
 
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
@@ -34,13 +33,25 @@ public class PropertiesUtil {
 		return properties;
 	}
 
-	private static void loadProps() {
+	/*private static void loadProps() {
 		try(InputStream in = new FileInputStream(CONFIG_FILE);) {
 			properties.load(in);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}*/
+	
+	
+	static InputStream inputStream = new PropertiesUtil().getClass().getResourceAsStream("application.properties");
+	private static void loadProps() {
+		try(InputStream in = inputStream) {
+			properties.load(in);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
+	
+
 
 	
 }

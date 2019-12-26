@@ -24,6 +24,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
 import org.apache.commons.lang3.StringUtils;
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -52,8 +53,7 @@ public class TerraService {
 	String spinPipelineName = "spinPipe";
 	String spinpiPelineId = "spinPipeId";
 	String spinPlan = System.getenv("plan");
-	String spinGitAccount = System.getenv("gitAccount");
-	String spincloudAccount = System.getenv("cloudAccount");
+	String spinArtifactAccount = System.getenv("artifactAccount");
 	String applicationName = "applicationName-" + spinApplicationName;
 	String pipelineName = "pipelineName-" + spinPipelineName;
 	String pipelineId = "pipelineId-" + spinpiPelineId;
@@ -67,7 +67,6 @@ public class TerraService {
 		log.info("plan starting ::");
 		log.info("applicationName:" + applicationName);
 		log.info("pipelineName:" + pipelineName);
-		log.info("spincloudAccount:" + spincloudAccount);
 		log.info("pipelineId:" + pipelineId);
 		
 		File currentTerraformInfraCodeDir = terraAppUtil.createDirForPipelineId(applicationName, pipelineName,
@@ -81,7 +80,7 @@ public class TerraService {
 		InputStream statusInputStream = new ByteArrayInputStream(status.toString().getBytes(StandardCharsets.UTF_8));
 		terraAppUtil.writeStreamOnFile(statusFile, statusInputStream);
 
-		terraServicePlanSetting(artifactconfigaccount, spinGitAccount, spinPlan, spincloudAccount, currentTerraformInfraCodeDir);
+		terraServicePlanSetting(artifactconfigaccount, spinArtifactAccount, spinPlan, currentTerraformInfraCodeDir);
 
 		TerraformInitThread terraInitOperationCall = new TerraformInitThread(currentTerraformInfraCodeDir, variableOverrideFile);
 		Thread trigger = new Thread(terraInitOperationCall);
@@ -94,7 +93,7 @@ public class TerraService {
 		}
 	
 		
-		String tfModulejsonpath = currentTerraformInfraCodeDir + ".terraform/modules/modules.json";
+		String tfModulejsonpath = currentTerraformInfraCodeDir + "/.terraform/modules/modules.json";
 		String tfModulejson = terraAppUtil.getStrJson(tfModulejsonpath);
 		
 		
@@ -106,10 +105,20 @@ public class TerraService {
 			throw new RuntimeException("config Parse error:", pe);
 		}
 		
-		String tfModuledir = (String) moduleConfigObject.get("Dir");
-		String tfRootModule = (String) moduleConfigObject.get("Root");
+		JSONObject correcttModule = null; 
+		JSONArray Modules = (JSONArray) moduleConfigObject.get("Modules");
+		for(int i=0; i<Modules.size(); i++) {
+			JSONObject currentModule = (JSONObject) Modules.get(i);
+			String currentKey = (String) currentModule.get("Key");
+			if(StringUtils.equalsAnyIgnoreCase("terraModule", currentKey)) {
+				correcttModule = currentModule;
+				break;
+			}
+		}
 		
-		String exacttfRootModuleFilePathinStr = currentTerraformInfraCodeDir + tfModuledir + "/" + tfRootModule;
+		String tfModuledir = (String) correcttModule.get("Dir");
+		
+		String exacttfRootModuleFilePathinStr = currentTerraformInfraCodeDir + "/" + tfModuledir;
 		File exacttfRootModuleFilePathdir = new File(exacttfRootModuleFilePathinStr);
 		
 		
@@ -178,17 +187,14 @@ public class TerraService {
 	}
 	
 	
-	public void terraServicePlanSetting(JSONObject artifactconfigaccount, String spinGitAccount, String spinPlan,
-			String spincloudAccount, File currentTerraformInfraCodeDir) {
+	public void terraServicePlanSetting(JSONObject artifactconfigaccount, String artifactAccount, String spinPlan, File currentTerraformInfraCodeDir) {
 		String terraformInfraCode = null;
 
-		if (StringUtils.isNoneEmpty(spinGitAccount)) {
-			String planConfig = new String(
-					"module \"terraModule\"{source = \"git::https://GITUSER:GITPASS@github.com/GITUSER/GITPLANURL\"}");
+		if (StringUtils.isNoneEmpty(artifactAccount)) {
+			String planConfig = new String( "module \"terraModule\"{source = \"git::https://GITUSER:GITPASS@github.com/GITUSER/GITPLANURL\"}");
 			// String gitPlanUrl = spinPlan.split("https://")[1];
 			String gitPlanUrl = spinPlan;
 			// JSONObject artifacts = (JSONObject) halConfigObject.get("artifacts");
-
 			JSONObject githubArtifactAccount = artifactconfigaccount;
 
 			String gitUser = (String) githubArtifactAccount.get("username");

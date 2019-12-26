@@ -99,7 +99,7 @@ public class TerraService {
 		boolean ischangemod = processutil.runcommand("chmod 777 -R " + destination);
 		log.info("-----ischangemod status ----" + ischangemod);
 
-		String tfModulejsonpath = currentTerraformInfraCodeDir + ".terraform/modules/modules.json";
+		String tfModulejsonpath = currentTerraformInfraCodeDir + "/.terraform/modules/modules.json";
 		String tfModulejson = terraAppUtil.getStrJson(tfModulejsonpath);
 		
 		
@@ -111,10 +111,20 @@ public class TerraService {
 			throw new RuntimeException("config Parse error:", pe);
 		}
 		
-		String tfModuledir = (String) moduleConfigObject.get("Dir");
-		String tfRootModule = (String) moduleConfigObject.get("Root");
+		JSONObject correcttModule = null; 
+		JSONArray Modules = (JSONArray) moduleConfigObject.get("Modules");
+		for(int i=0; i<Modules.size(); i++) {
+			JSONObject currentModule = (JSONObject) Modules.get(i);
+			String currentKey = (String) currentModule.get("Key");
+			if(StringUtils.equalsAnyIgnoreCase("terraModule", currentKey)) {
+				correcttModule = currentModule;
+				break;
+			}
+		}
 		
-		String exacttfRootModuleFilePathinStr = currentTerraformInfraCodeDir + tfModuledir + "/" + tfRootModule;
+		String tfModuledir = (String) correcttModule.get("Dir");
+		
+		String exacttfRootModuleFilePathinStr = currentTerraformInfraCodeDir + "/" + tfModuledir;
 		File exacttfRootModuleFilePathdir = new File(exacttfRootModuleFilePathinStr);
 		
 		
@@ -245,61 +255,53 @@ public class TerraService {
 		return planExeOutputValuesJsonObj;
 	}
 
-	public boolean terraServicePlanSetting(JSONObject halConfigObject, String spinGitAccount, String spinPlan,
-			String spincloudAccount, boolean isGitModule, File currentTerraformInfraCodeDir) {
-		String terraformInfraCode = null;
-
-		if (StringUtils.isNoneEmpty(spinGitAccount)) {
-			String planConfig = new String(
-					"module \"terraModule\"{source = \"git::https://GITUSER:GITPASS@github.com/GITUSER/GITPLANURL\"}");
-			// String gitPlanUrl = spinPlan.split("https://")[1];
-			String gitPlanUrl = spinPlan;
-			// JSONObject artifacts = (JSONObject) halConfigObject.get("artifacts");
-
-			JSONArray githubArtifactAccounts = (JSONArray) ((JSONObject) ((JSONObject) halConfigObject.get("artifacts"))
-					.get("github")).get("accounts");
-			JSONObject githubArtifactAccount = null;
-
-			for (int i = 0; i < githubArtifactAccounts.size(); i++) {
-				githubArtifactAccount = (JSONObject) githubArtifactAccounts.get(i);
-				String githubArtifactaccountName = (String) githubArtifactAccount.get("name");
-				if (StringUtils.equalsIgnoreCase(githubArtifactaccountName.trim(), spincloudAccount.trim()))
-					break;
-			}
-			String gitUser = (String) githubArtifactAccount.get("username");
-			String gittoken = (String) githubArtifactAccount.get("token");
-			String gitPass = (String) githubArtifactAccount.get("password");
-			isGitModule = true;
-
-			if (StringUtils.isNoneEmpty(gitPass)) {
-				terraformInfraCode = planConfig.replaceAll("GITUSER", gitUser).replaceAll("GITPASS", gitPass)
-						.replaceAll("GITPLANURL", gitPlanUrl);
-			} else {
-				terraformInfraCode = planConfig.replaceAll("GITUSER", gitUser).replaceAll("GITPASS", gittoken)
-						.replaceAll("GITPLANURL", gitPlanUrl);
-			}
-
-		} else {
-			terraformInfraCode = spinPlan;
-		}
-
-		String infraCodePath = currentTerraformInfraCodeDir.getPath() + "/infraCode.tf";
-		File infraCodfile = new File(infraCodePath);
-		if (!infraCodfile.exists()) {
-			try {
-				infraCodfile.createNewFile();
-			} catch (IOException e) {
-				log.info("Error : terraform InfrCodfile Creation");
-				throw new RuntimeException("Error : terraform InfrCodfile Creation ", e);
-
-			}
-		}
-
-		InputStream infraCodeInputStream = new ByteArrayInputStream(
-				terraformInfraCode.getBytes(StandardCharsets.UTF_8));
-		terraAppUtil.overWriteStreamOnFile(infraCodfile, infraCodeInputStream);
-
-		return isGitModule;
-	}
+	/*
+	 * public boolean terraServicePlanSetting(JSONObject halConfigObject, String
+	 * spinGitAccount, String spinPlan, String spincloudAccount, boolean
+	 * isGitModule, File currentTerraformInfraCodeDir) { String terraformInfraCode =
+	 * null;
+	 * 
+	 * if (StringUtils.isNoneEmpty(spinGitAccount)) { String planConfig = new
+	 * String(
+	 * "module \"terraModule\"{source = \"git::https://GITUSER:GITPASS@github.com/GITUSER/GITPLANURL\"}"
+	 * ); // String gitPlanUrl = spinPlan.split("https://")[1]; String gitPlanUrl =
+	 * spinPlan; // JSONObject artifacts = (JSONObject)
+	 * halConfigObject.get("artifacts");
+	 * 
+	 * JSONArray githubArtifactAccounts = (JSONArray) ((JSONObject) ((JSONObject)
+	 * halConfigObject.get("artifacts")) .get("github")).get("accounts"); JSONObject
+	 * githubArtifactAccount = null;
+	 * 
+	 * for (int i = 0; i < githubArtifactAccounts.size(); i++) {
+	 * githubArtifactAccount = (JSONObject) githubArtifactAccounts.get(i); String
+	 * githubArtifactaccountName = (String) githubArtifactAccount.get("name"); if
+	 * (StringUtils.equalsIgnoreCase(githubArtifactaccountName.trim(),
+	 * spincloudAccount.trim())) break; } String gitUser = (String)
+	 * githubArtifactAccount.get("username"); String gittoken = (String)
+	 * githubArtifactAccount.get("token"); String gitPass = (String)
+	 * githubArtifactAccount.get("password"); isGitModule = true;
+	 * 
+	 * if (StringUtils.isNoneEmpty(gitPass)) { terraformInfraCode =
+	 * planConfig.replaceAll("GITUSER", gitUser).replaceAll("GITPASS", gitPass)
+	 * .replaceAll("GITPLANURL", gitPlanUrl); } else { terraformInfraCode =
+	 * planConfig.replaceAll("GITUSER", gitUser).replaceAll("GITPASS", gittoken)
+	 * .replaceAll("GITPLANURL", gitPlanUrl); }
+	 * 
+	 * } else { terraformInfraCode = spinPlan; }
+	 * 
+	 * String infraCodePath = currentTerraformInfraCodeDir.getPath() +
+	 * "/infraCode.tf"; File infraCodfile = new File(infraCodePath); if
+	 * (!infraCodfile.exists()) { try { infraCodfile.createNewFile(); } catch
+	 * (IOException e) { log.info("Error : terraform InfrCodfile Creation"); throw
+	 * new RuntimeException("Error : terraform InfrCodfile Creation ", e);
+	 * 
+	 * } }
+	 * 
+	 * InputStream infraCodeInputStream = new ByteArrayInputStream(
+	 * terraformInfraCode.getBytes(StandardCharsets.UTF_8));
+	 * terraAppUtil.overWriteStreamOnFile(infraCodfile, infraCodeInputStream);
+	 * 
+	 * return isGitModule; }
+	 */
 
 }

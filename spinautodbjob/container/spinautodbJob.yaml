@@ -1,10 +1,36 @@
-
-
+job:
+  preconfigured:
+    kubernetes:
+      - label: SQLStage
+        type: customJobSQLStage
+        description: Stage for db migration
+        cloudProvider: kubernetes
+        account: my-k8s-v2-account
+        credentials: my-k8s-v2-account
+        waitForCompletion: true
+        application: bookmarks
+        parameters:
+          - label: dbaccount
+            name: pass db account name
+            description: pass db account name on which you want to do SQL operation.
+            mapping: manifest.spec.template.spec.containers[0].env[0].value
+            defaultValue: "example1"
+          - label: artifactaccount
+            name: pass artifact account name
+            description: pass artifact account name on which your sql file present.
+            mapping: manifest.spec.template.spec.containers[0].env[1].value
+            defaultValue: "example2"
+          - label: SQLfile path
+            name: SQLfile path
+            description: pass migration script contains.
+            mapping: manifest.spec.template.spec.containers[0].env[2].value
+            defaultValue: "example3"
+        manifest:
           apiVersion: batch/v1
           kind: Job
           metadata:
             name: spinautodb
-            namespace: 
+            namespace: **********
           spec:
             backoffLimit: 0
             template:
@@ -14,15 +40,17 @@
                   - name: opsmx-spinautodb-dbaccount-config
                     configMap:
                       name: spinautodbaccountconfig
-                  - name: opsmx-spinautodb-backend-config
+                  - name: opsmx-spinautodb-artifactaccount-config
                     configMap:
-                      name: spinautodbbackendconfig
+                      name: spinautodbartifactaccountconfig
                 containers: 
                   - name: spinautodb
-                    image: 'docker.io/opsmx11/spinautodb:test1'
+                    image: 'docker.io/opsmx11/spinautodb:v0.9'
                     imagePullPolicy: Always
                     env:
                       - name: dbaccount
+                        value: 
+                      - name: artifactaccount
                         value: 
                       - name: dbscript
                         value: 
@@ -30,5 +58,6 @@
                     volumeMounts:
                     - name: opsmx-spinautodb-dbaccount-config
                       mountPath: /home/spinautodb/opsmx/db/
-                    - name: opsmx-spinautodb-backend-config
-                      mountPath: /home/spinautodb/opsmx/app/config/
+                    - name: opsmx-spinautodb-artifactaccount-config
+                      mountPath: /home/spinautodb/opsmx/artifact/
+

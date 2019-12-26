@@ -2,15 +2,13 @@
 
 #nohup java -Dspring.config.location=/home/terraspin/opsmx/app/config/application.properties  -jar /home/terraspin/artifact/TerraSpin.jar > /home/terraspin/artifact/terraspin.log 2>&1 &
 
-java -Dspring.config.location=/home/terraspin/opsmx/app/config/application.properties  -jar /home/terraspin/artifact/TerraSpin.jar
+#java -jar /home/terraspin/artifact/TerraSpin.jar --application.iscontainer.env=true
+java -jar /home/terraspin/artifact/TerraSpin.jar
 
-#tail -f /home/terraspin/artifact/terraspin.log &
+#  For Debugging, Docker should alive! Uncommment while portation to keep containe live
+#while :; do echo '*print*'; sleep 5; done
 
-#while :; do
-#  sleep 100
-#  # For Debugging, Docker should alive!
-#done
-echo "started terraspin plan service..."
+
 
 
 

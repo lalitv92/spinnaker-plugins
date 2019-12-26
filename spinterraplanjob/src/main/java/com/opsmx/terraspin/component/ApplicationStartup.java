@@ -16,14 +16,8 @@
 
 package com.opsmx.terraspin.component;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.stream.Stream;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -78,14 +72,14 @@ public class ApplicationStartup implements ApplicationListener<ContextRefreshedE
 				+ System.getProperty("user.home"));
 		log.info("spinPlan:" + spinPlan);
 		log.info("spinArtifactAccount:" + spinArtifactAccount);
-		// log.info("spincloudAccount:" + spincloudAccount);
+		log.info("tfVariableOverrideFileRepo:" + tfVariableOverrideFileRepo);
 		log.info("spinStateRepo:" + spinStateRepo);
 		log.info("uuId:" + uuId);
 
 		String spinStateRepoName = spinStateRepo.trim().split(".git")[0];
-		String tfVariableOverrideFileRepoName = tfVariableOverrideFileRepo.trim().split(".git")[0];
-		String tfVariableOverrideFileName = tfVariableOverrideFileRepo.trim().split("//")[1];
 		String staterepoDirPath = currentUserDir + "/" + spinStateRepoName;
+		String tfVariableOverrideFileRepoName = new String();
+		String tfVariableOverrideFileName = new String();
 
 		TerraAppUtil terraapputil = new TerraAppUtil();
 		TerraService terraservice = new TerraService();
@@ -104,11 +98,10 @@ public class ApplicationStartup implements ApplicationListener<ContextRefreshedE
 		File terraformInitSource = new File(scriptDirFile.getPath() + separator + "exeTerraformInit.sh");
 		terraapputil.overWriteStreamOnFile(terraformInitSource, getClass().getClassLoader()
 				.getResourceAsStream(separator + "script" + separator + "exeTerraformInit.sh"));
-		
+
 		File terraformPlanSource = new File(scriptDirFile.getPath() + separator + "exeTerraformPlan.sh");
 		terraapputil.overWriteStreamOnFile(terraformPlanSource, getClass().getClassLoader()
 				.getResourceAsStream(separator + "script" + separator + "exeTerraformPlan.sh"));
-		
 
 		String configString = terraapputil.getConfig();
 		JSONObject configObject = null;
@@ -129,6 +122,11 @@ public class ApplicationStartup implements ApplicationListener<ContextRefreshedE
 				break;
 		}
 
+		if (!StringUtils.isEmpty(tfVariableOverrideFileRepo)) {
+			tfVariableOverrideFileRepoName = tfVariableOverrideFileRepo.trim().split(".git")[0];
+			tfVariableOverrideFileName = tfVariableOverrideFileRepo.trim().split("//")[1];
+		}
+		
 		if (!artifactAccount.isEmpty()) {
 
 			String gitUser = (String) artifactAccount.get("username");

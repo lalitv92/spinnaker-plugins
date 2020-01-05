@@ -1,21 +1,22 @@
 #!/bin/bash
 
 planDir=$1
-variablefile=\"$2\"
+#variablefile='"$2"'
+variablefile=$2
+
 
 cd $planDir
 echo In shell script path :: $planDir
 
-#terraform init -no-color
-
 
 if [ $# -eq 2 ] 
 then
-   terraform init -var-file=$variablefile -no-color
-   terraform plan -var-file=$variablefile -no-color
+    echo :: In terraform plan part with variable override :: variablefile path :: $variablefile
+    terraform plan -no-color -var-file=$variablefile
+
 else
-   terraform init -no-color
-   terraform plan -no-color 
+    echo :: In terraform plan part without variable override file
+    terraform plan -no-color 
 fi
 
 

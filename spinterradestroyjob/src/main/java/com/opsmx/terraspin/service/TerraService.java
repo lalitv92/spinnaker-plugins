@@ -57,8 +57,8 @@ public class TerraService {
 	String spinPipelineName = "spinPipe";
 	String spinpiPelineId = "spinPipeId";
 	String spinPlan = System.getenv("plan");
-	String spinGitAccount = System.getenv("gitAccount");
-	String spincloudAccount = System.getenv("cloudAccount");
+	//String spinGitAccount = System.getenv("gitAccount");
+	//String spincloudAccount = System.getenv("cloudAccount");
 	String applicationName = "applicationName-" + spinApplicationName;
 	String pipelineName = "pipelineName-" + spinPipelineName;
 	String pipelineId = "pipelineId-" + spinpiPelineId;
@@ -153,7 +153,7 @@ public class TerraService {
 	}
 
 	@SuppressWarnings("unchecked")
-	public JSONObject destroyStatus(String applicationName, String pipelineName, String pipelineId, String baseURL) {
+	public JSONObject destroyStatus( String baseURL) {
 		String currentSatusDir = userHomeDir + "/.opsmx/spinnaker/" + applicationName + "/" + pipelineName + "/"
 				+ pipelineId + "/destroyStatus";
 

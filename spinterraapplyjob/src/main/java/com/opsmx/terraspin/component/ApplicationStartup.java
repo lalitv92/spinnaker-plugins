@@ -147,10 +147,10 @@ public class ApplicationStartup implements ApplicationListener<ContextRefreshedE
 			tfFileStateRepoGitCloneCommand = tfFileStateRepoGitCloneCommand.replaceAll("GITUSER", gitUser)
 					.replaceAll("GITPASS", gitPass).replaceAll("REPONAME", spinStateRepo);
 
-			checkTfVariableOverrideFileRepoPresentCommand = checkTfFileStateRepoPresentCommand
+			checkTfVariableOverrideFileRepoPresentCommand = checkTfVariableOverrideFileRepoPresentCommand
 					.replaceAll("GITUSER", gitUser).replaceAll("GITPASS", gitPass)
 					.replaceAll("REPONAME", tfVariableOverrideFileRepoName);
-			tfVariableOverrideFileGitCloneCommand = tfFileStateRepoGitCloneCommand.replaceAll("GITUSER", gitUser)
+			tfVariableOverrideFileGitCloneCommand = tfVariableOverrideFileGitCloneCommand.replaceAll("GITUSER", gitUser)
 					.replaceAll("GITPASS", gitPass).replaceAll("REPONAME", tfVariableOverrideFileRepoName);
 
 		} else {
@@ -159,10 +159,10 @@ public class ApplicationStartup implements ApplicationListener<ContextRefreshedE
 			tfFileStateRepoGitCloneCommand = tfFileStateRepoGitCloneCommand.replaceAll("GITUSER", gitUser)
 					.replaceAll("GITPASS", gittoken).replaceAll("REPONAME", spinStateRepo);
 
-			checkTfVariableOverrideFileRepoPresentCommand = checkTfFileStateRepoPresentCommand
+			checkTfVariableOverrideFileRepoPresentCommand = checkTfVariableOverrideFileRepoPresentCommand
 					.replaceAll("GITUSER", gitUser).replaceAll("GITPASS", gittoken)
 					.replaceAll("REPONAME", tfVariableOverrideFileRepoName);
-			tfVariableOverrideFileGitCloneCommand = tfFileStateRepoGitCloneCommand.replaceAll("GITUSER", gitUser)
+			tfVariableOverrideFileGitCloneCommand = tfVariableOverrideFileGitCloneCommand.replaceAll("GITUSER", gitUser)
 					.replaceAll("GITPASS", gittoken).replaceAll("REPONAME", tfVariableOverrideFileRepoName);
 		}
 

@@ -94,7 +94,9 @@ public class ApplicationStartup implements ApplicationListener<ContextRefreshedE
 		File scriptDirFile = new File(opsmxDirFile.getPath() + separator + "script");
 		if (!scriptDirFile.exists())
 			scriptDirFile.mkdir();
+		
 
+	
 		File terraformInitSource = new File(scriptDirFile.getPath() + separator + "exeTerraformInit.sh");
 		terraapputil.overWriteStreamOnFile(terraformInitSource, getClass().getClassLoader()
 				.getResourceAsStream(separator + "script" + separator + "exeTerraformInit.sh"));
@@ -145,10 +147,10 @@ public class ApplicationStartup implements ApplicationListener<ContextRefreshedE
 				tfFileStateRepoGitCloneCommand = tfFileStateRepoGitCloneCommand.replaceAll("GITUSER", gitUser)
 						.replaceAll("GITPASS", gitPass).replaceAll("REPONAME", spinStateRepo);
 
-				checkTfVariableOverrideFileRepoPresentCommand = checkTfFileStateRepoPresentCommand
+				checkTfVariableOverrideFileRepoPresentCommand = checkTfVariableOverrideFileRepoPresentCommand
 						.replaceAll("GITUSER", gitUser).replaceAll("GITPASS", gitPass)
 						.replaceAll("REPONAME", tfVariableOverrideFileRepoName);
-				tfVariableOverrideFileGitCloneCommand = tfFileStateRepoGitCloneCommand.replaceAll("GITUSER", gitUser)
+				tfVariableOverrideFileGitCloneCommand = tfVariableOverrideFileGitCloneCommand.replaceAll("GITUSER", gitUser)
 						.replaceAll("GITPASS", gitPass).replaceAll("REPONAME", tfVariableOverrideFileRepoName);
 
 			} else {
@@ -157,10 +159,10 @@ public class ApplicationStartup implements ApplicationListener<ContextRefreshedE
 				tfFileStateRepoGitCloneCommand = tfFileStateRepoGitCloneCommand.replaceAll("GITUSER", gitUser)
 						.replaceAll("GITPASS", gittoken).replaceAll("REPONAME", spinStateRepo);
 
-				checkTfVariableOverrideFileRepoPresentCommand = checkTfFileStateRepoPresentCommand
+				checkTfVariableOverrideFileRepoPresentCommand = checkTfVariableOverrideFileRepoPresentCommand
 						.replaceAll("GITUSER", gitUser).replaceAll("GITPASS", gittoken)
 						.replaceAll("REPONAME", tfVariableOverrideFileRepoName);
-				tfVariableOverrideFileGitCloneCommand = tfFileStateRepoGitCloneCommand.replaceAll("GITUSER", gitUser)
+				tfVariableOverrideFileGitCloneCommand = tfVariableOverrideFileGitCloneCommand.replaceAll("GITUSER", gitUser)
 						.replaceAll("GITPASS", gittoken).replaceAll("REPONAME", tfVariableOverrideFileRepoName);
 			}
 
@@ -174,12 +176,11 @@ public class ApplicationStartup implements ApplicationListener<ContextRefreshedE
 						.runcommand(checkTfVariableOverrideFileRepoPresentCommand);
 				log.info("checking is variable overide file repo present :: " + isOverrideVariableFileRepoPresent);
 
-				if (isOverrideVariableFileRepoPresent) {
+				if (isOverrideVariableFileRepoPresent && !StringUtils.isEmpty(tfVariableOverrideFileRepo)) {
 
 					String overrideVariableFiledestination = "/home/terraspin/extra";
-
-					boolean isOverrideVariableRepoGitcloned = processutil.runcommandwithindir(
-							tfVariableOverrideFileGitCloneCommand, overrideVariableFiledestination);
+										
+					boolean isOverrideVariableRepoGitcloned = processutil.runcommandwithindir(tfVariableOverrideFileGitCloneCommand, overrideVariableFiledestination);
 					log.info("is overide variable file git repo cloned :: " + isOverrideVariableRepoGitcloned);
 
 					if (isOverrideVariableRepoGitcloned) {

@@ -9,6 +9,10 @@ java -jar /home/terraspin/artifact/TerraSpin.jar
 #while :; do echo '*print*'; sleep 5; done
 
 
+RED='\033[0;31m'
+NC='\033[0m' # No Color
+printf "I ${RED} Time travel ${NC} Stack Overflow\n"
+
 
 
 

@@ -98,34 +98,9 @@ public class ApplicationStartup implements ApplicationListener<ContextRefreshedE
 		if (!scriptDirFile.exists())
 			scriptDirFile.mkdir();
 
-		File terraformApplySource = new File(scriptDirFile.getPath() + separator + "exeTerraformApply.sh");
-		terraapputil.overWriteStreamOnFile(terraformApplySource, getClass().getClassLoader()
-				.getResourceAsStream(separator + "script" + separator + "exeTerraformApply.sh"));
-
-		File terraformPlanSource = new File(scriptDirFile.getPath() + separator + "exeTerraformPlan.sh");
-		terraapputil.overWriteStreamOnFile(terraformPlanSource, getClass().getClassLoader()
-				.getResourceAsStream(separator + "script" + separator + "exeTerraformPlan.sh"));
-
-		File terraformOutputSource = new File(scriptDirFile.getPath() + separator + "exeTerraformOutput.sh");
-		terraapputil.overWriteStreamOnFile(terraformOutputSource, getClass().getClassLoader()
-				.getResourceAsStream(separator + "script" + separator + "exeTerraformOutput.sh"));
-
-		File terraformGitOutputSource = new File(scriptDirFile.getPath() + separator + "exeTerraformGitOutput.sh");
-		terraapputil.overWriteStreamOnFile(terraformGitOutputSource, getClass().getClassLoader()
-				.getResourceAsStream(separator + "script" + separator + "exeTerraformGitOutput.sh"));
-
 		File terraformDestroySource = new File(scriptDirFile.getPath() + separator + "exeTerraformDestroy.sh");
 		terraapputil.overWriteStreamOnFile(terraformDestroySource, getClass().getClassLoader()
 				.getResourceAsStream(separator + "script" + separator + "exeTerraformDestroy.sh"));
-
-		File halConfigSource = new File(scriptDirFile.getPath() + separator + "exeHalConfig.sh");
-		terraapputil.overWriteStreamOnFile(halConfigSource,
-				getClass().getClassLoader().getResourceAsStream(separator + "script" + separator + "exeHalConfig.sh"));
-
-		/*
-		 * log.info("In hal config is container env: " + isContainer);
-		 * HalConfigUtil.setHalConfig(halConfig(halConfigSource, isContainer));
-		 */
 
 		String configString = terraapputil.getConfig();
 		JSONObject configObject = null;
@@ -165,10 +140,10 @@ public class ApplicationStartup implements ApplicationListener<ContextRefreshedE
 			tfFileStateRepoGitCloneCommand = tfFileStateRepoGitCloneCommand.replaceAll("GITUSER", gitUser)
 					.replaceAll("GITPASS", gitPass).replaceAll("REPONAME", spinStateRepo);
 
-			checkTfVariableOverrideFileRepoPresentCommand = checkTfFileStateRepoPresentCommand
+			checkTfVariableOverrideFileRepoPresentCommand = checkTfVariableOverrideFileRepoPresentCommand
 					.replaceAll("GITUSER", gitUser).replaceAll("GITPASS", gitPass)
 					.replaceAll("REPONAME", tfVariableOverrideFileRepoName);
-			tfVariableOverrideFileGitCloneCommand = tfFileStateRepoGitCloneCommand.replaceAll("GITUSER", gitUser)
+			tfVariableOverrideFileGitCloneCommand = tfVariableOverrideFileGitCloneCommand.replaceAll("GITUSER", gitUser)
 					.replaceAll("GITPASS", gitPass).replaceAll("REPONAME", tfVariableOverrideFileRepoName);
 
 		} else {
@@ -177,10 +152,10 @@ public class ApplicationStartup implements ApplicationListener<ContextRefreshedE
 			tfFileStateRepoGitCloneCommand = tfFileStateRepoGitCloneCommand.replaceAll("GITUSER", gitUser)
 					.replaceAll("GITPASS", gittoken).replaceAll("REPONAME", spinStateRepo);
 
-			checkTfVariableOverrideFileRepoPresentCommand = checkTfFileStateRepoPresentCommand
+			checkTfVariableOverrideFileRepoPresentCommand = checkTfVariableOverrideFileRepoPresentCommand
 					.replaceAll("GITUSER", gitUser).replaceAll("GITPASS", gittoken)
 					.replaceAll("REPONAME", tfVariableOverrideFileRepoName);
-			tfVariableOverrideFileGitCloneCommand = tfFileStateRepoGitCloneCommand.replaceAll("GITUSER", gitUser)
+			tfVariableOverrideFileGitCloneCommand = tfVariableOverrideFileGitCloneCommand.replaceAll("GITUSER", gitUser)
 					.replaceAll("GITPASS", gittoken).replaceAll("REPONAME", tfVariableOverrideFileRepoName);
 		}
 
@@ -189,7 +164,7 @@ public class ApplicationStartup implements ApplicationListener<ContextRefreshedE
 				.runcommand(checkTfVariableOverrideFileRepoPresentCommand);
 		log.info("checking is variable overide file repo present :: " + isOverrideVariableFileRepoPresent);
 
-		if (isOverrideVariableFileRepoPresent) {
+		if (isOverrideVariableFileRepoPresent && !StringUtils.isEmpty(tfVariableOverrideFileRepo)) {
 
 			String overrideVariableFiledestination = "/home/terraspin/extra";
 			boolean isOverrideVariableRepoGitcloned = processutil
@@ -211,7 +186,7 @@ public class ApplicationStartup implements ApplicationListener<ContextRefreshedE
 		
 		boolean isrepopresent = processutil.runcommand(checkTfFileStateRepoPresentCommand);
 		log.info("isrepopresent -- " + isrepopresent);
-		if (isrepopresent) {
+		if (isrepopresent && !StringUtils.isEmpty(spinStateRepo)) {
 			boolean isgitcloned = processutil.runcommandwithindir(tfFileStateRepoGitCloneCommand, currentUserDir);
 			log.info("isgitcloned -- " + isgitcloned);
 			if (isgitcloned) {
@@ -253,7 +228,7 @@ public class ApplicationStartup implements ApplicationListener<ContextRefreshedE
 					terraservice.destroyStart(extrapipelineidsrc, "", overrideVariableFilePath);
 				}
 				
-				JSONObject destroystatusobj = terraservice.destroyStatus("", "", "", "");
+				JSONObject destroystatusobj = terraservice.destroyStatus("");
 				log.info("current destroystatusobj status :: " + destroystatusobj);
 				String applystatusstr = (String) destroystatusobj.get("status");
 

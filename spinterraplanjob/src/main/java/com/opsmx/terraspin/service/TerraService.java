@@ -33,6 +33,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import com.opsmx.terraspin.component.ApplicationStartup;
+import com.opsmx.terraspin.util.ProcessUtil;
 import com.opsmx.terraspin.util.TerraAppUtil;
 
 @Component
@@ -46,6 +47,7 @@ public class TerraService {
 	 * @Autowired TerraAppUtil terraAppUtil1;
 	 */
 	TerraAppUtil terraAppUtil = new TerraAppUtil();
+	ProcessUtil processutil = new ProcessUtil();
 	
 	static String userHomeDir = System.getProperty("user.home");
 	static String DEMO_HTML = "<!DOCTYPE html> <html> <head> <meta charset=\"UTF-8\"> <title>Opsmx TerraApp</title> </head> <body bgcolor='#000000'> <pre style=\"color:white;\"> \"OPTION_SCPACE\" </pre> </body> </html>";
@@ -82,8 +84,8 @@ public class TerraService {
 
 		terraServicePlanSetting(artifactconfigaccount, spinArtifactAccount, spinPlan, currentTerraformInfraCodeDir);
 
-		TerraformInitThread terraInitOperationCall = new TerraformInitThread(currentTerraformInfraCodeDir, variableOverrideFile);
-		Thread trigger = new Thread(terraInitOperationCall);
+		TerraformIntialInitThread terraInitialInitOperationCall = new TerraformIntialInitThread(currentTerraformInfraCodeDir);
+		Thread trigger = new Thread(terraInitialInitOperationCall);
 		trigger.start();
 		try {
 			trigger.join();
@@ -122,11 +124,25 @@ public class TerraService {
 		File exacttfRootModuleFilePathdir = new File(exacttfRootModuleFilePathinStr);
 		
 		
-		TerraformPlanThread terraOperationCall = new TerraformPlanThread(exacttfRootModuleFilePathdir, currentTerraformInfraCodeDir, variableOverrideFile);
-		Thread trigger1 = new Thread(terraOperationCall);
+		TerraformInitThread terraInitOperationCall = new TerraformInitThread(exacttfRootModuleFilePathdir);
+		Thread trigger1 = new Thread(terraInitOperationCall);
 		trigger1.start();
 		try {
 			trigger1.join();
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		boolean ischangemod = processutil.runcommand("chmod 777 -R " + exacttfRootModuleFilePathdir);
+		log.info("changing mod of file status :: " + ischangemod + "current dir :: " + exacttfRootModuleFilePathdir);
+
+		
+		TerraformPlanThread terraOperationCall = new TerraformPlanThread(exacttfRootModuleFilePathdir, currentTerraformInfraCodeDir, variableOverrideFile);
+		Thread trigger2 = new Thread(terraOperationCall);
+		trigger2.start();
+		try {
+			trigger2.join();
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -158,7 +174,7 @@ public class TerraService {
 			}
 
 		} catch (Exception e) {
-			log.info("Error : parse plan staus");
+			log.info("Error : parse plan status");
 			throw new RuntimeException("parse plan status error ",e);
 		}
 		

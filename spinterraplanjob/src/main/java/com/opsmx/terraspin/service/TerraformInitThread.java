@@ -16,7 +16,6 @@
 
 package com.opsmx.terraspin.service;
 
-
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -35,57 +34,45 @@ import com.opsmx.terraspin.util.TerraAppUtil;
 class TerraformInitThread implements Runnable {
 
 	private static final Logger log = LoggerFactory.getLogger(TerraformInitThread.class);
-	
-	private File tfFilesDir;	
-	private String variableOverrideFile; 
-	
+
+	private File tfFilesDir;
+
 	public TerraformInitThread() {
-		
+
 	}
 
-	public TerraformInitThread(File tfFilesDir, String variableOverridefile) {
+	public TerraformInitThread(File tfFilesDir) {
 		this.tfFilesDir = tfFilesDir;
-		this.variableOverrideFile = variableOverridefile;
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
 	public void run() {
 		String initScriptPath = System.getProperty("user.home") + "/.opsmx/script/exeTerraformInit.sh";
-		log.info("terraform plan script path : "+initScriptPath);
-		log.info("tfFilesDir: "+ tfFilesDir);
-		log.info("variableOverrideFile: "+ variableOverrideFile);
-		
+		log.info("terraform plan script path : " + initScriptPath);
+		log.info("tfFilesDir: " + tfFilesDir);
+
 		TerraAppUtil terraAppUtil = new TerraAppUtil();
 		Process exec;
 		try {
-			
-			if(StringUtils.isEmpty(variableOverrideFile)) {
-				log.info("In non variable override ");
-				
-				exec = Runtime.getRuntime().exec(new String[] { "/bin/sh", "-c",
-						"printf 'yes' | sh " + initScriptPath + " " + tfFilesDir.getPath() });
-				exec.waitFor();
-				
-			}else {
-				log.info("In variable override ");
-				exec = Runtime.getRuntime().exec(new String[] { "/bin/sh", "-c",
-						"printf 'yes' | sh " + initScriptPath + " " + tfFilesDir.getPath() + " " + variableOverrideFile });
-				exec.waitFor();
-			}
 
+			log.info("In non variable override ");
+
+			exec = Runtime.getRuntime().exec(new String[] { "/bin/sh", "-c",
+					"printf 'yes' | sh " + initScriptPath + " " + tfFilesDir.getPath() });
+			exec.waitFor();
 
 			BufferedReader reader = new BufferedReader(new InputStreamReader(exec.getInputStream()));
 			String line = "";
 			String tempLine = "";
-			while ((tempLine = reader.readLine()) != null) {				
+			while ((tempLine = reader.readLine()) != null) {
 				line = line + tempLine.trim() + System.lineSeparator();
 			}
 
 			BufferedReader reader2 = new BufferedReader(new InputStreamReader(exec.getErrorStream()));
 			String line2 = "";
 			String tempLine2 = "";
-			while ((tempLine2 = reader2.readLine()) != null) {				
+			while ((tempLine2 = reader2.readLine()) != null) {
 				line2 = line2 + tempLine2.trim() + System.lineSeparator();
 			}
 
@@ -99,7 +86,7 @@ class TerraformInitThread implements Runnable {
 			} else {
 				statusRootObj.put("status", "TERMINAL");
 				statusRootObj.put("output", line2);
-				log.info("terraform plan script error stream : "+line2);
+				log.info("terraform plan script error stream : " + line2);
 			}
 
 			String filePath = tfFilesDir.getPath() + "/planStatus";
@@ -107,10 +94,10 @@ class TerraformInitThread implements Runnable {
 			InputStream statusInputStream = new ByteArrayInputStream(
 					statusRootObj.toString().getBytes(StandardCharsets.UTF_8));
 			terraAppUtil.overWriteStreamOnFile(statusFile, statusInputStream);
-			log.debug("terraform plan execution status :"+statusRootObj);
+			log.debug("terraform plan execution status :" + statusRootObj);
 		} catch (IOException | InterruptedException e) {
-			log.info("terraform plan execution execption message :"+e.getMessage());			
-		    throw new RuntimeException("terraform plan execution",e);
+			log.info("terraform plan execution execption message :" + e.getMessage());
+			throw new RuntimeException("terraform plan execution", e);
 		}
 	}
 

@@ -21,7 +21,7 @@ RUN chown terraspin /home/terraspin
 
 USER terraspin
 
-RUN mkdir -p /home/terraspin/artifact /home/terraspin/opsmx/app /home/terraspin/opsmx/app/config /home/terraspin/opsmx/hal /home/terraspin/opsmx/kubeaccount
+RUN mkdir -p /home/terraspin/artifact /home/terraspin/extra /home/terraspin/opsmx/app /home/terraspin/opsmx/app/config /home/terraspin/opsmx/hal /home/terraspin/opsmx/kubeaccount
 
 RUN touch /home/terraspin/artifact/terraspin.log && \
     chmod 777 /home/terraspin/artifact/terraspin.log
@@ -33,5 +33,7 @@ COPY /terraform  /usr/local/bin/terraform
 COPY /run.sh  /usr/local/bin/run.sh
 
 COPY /TerraSpin.jar  /home/terraspin/artifact/TerraSpin.jar
+
+COPY /terra.html  /home/terraspin/opsmx/kubeaccount/terra.html
 
 CMD run.sh

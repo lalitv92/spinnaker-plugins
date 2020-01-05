@@ -8,4 +8,6 @@ java -jar /home/terraspin/artifact/TerraSpin.jar
 #  For Debugging, Docker should alive! Uncommment while portation to keep containe live
 #while :; do echo '*print*'; sleep 5; done
 
+cat /home/terraspin/opsmx/kubeaccount/terra.html
+
 

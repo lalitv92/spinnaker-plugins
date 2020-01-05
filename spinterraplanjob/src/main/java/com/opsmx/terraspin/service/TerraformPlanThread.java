@@ -68,7 +68,7 @@ class TerraformPlanThread implements Runnable {
 			}else {
 				
 				exec = Runtime.getRuntime().exec(new String[] { "/bin/sh", "-c",
-						"printf 'yes' | sh " + planScriptPath + " " + tfRootModulepath.getPath() + " " + variableOverrideFile });
+						"sh " + planScriptPath + " " + tfRootModulepath.getPath() + " " + variableOverrideFile });
 				exec.waitFor();
 			}
 

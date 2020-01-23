@@ -10,23 +10,23 @@ job:
         waitForCompletion: true
         application: terraformdemo
         parameters:
-          - name: artifactAccount
-            label: artifactAccount
+          - name: Artifact-Account
+            label: Artifact-Account
             description: pass git account name.
             mapping: manifest.spec.template.spec.containers[0].env[0].value
             defaultValue: "try1"
-          - name: overrideVariableFile
-            label: overrideVariableFile
+          - name: Override-Variable File
+            label: Override-Variable File
             description: pass overrideVariableFile path if you want to override variables.
             mapping: manifest.spec.template.spec.containers[0].env[1].value
             defaultValue: "try2"
-          - name: stateRepo
-            label: stateRepo
+          - name: State-Repo
+            label: State-Repo
             description: pass repo name where you want to save intermidiated state of terraform state.
             mapping: manifest.spec.template.spec.containers[0].env[2].value
             defaultValue: "try3"
-          - name: uuId
-            label: uuId
+          - name: UUId
+            label: UUId
             description: pass unique user id.
             mapping: manifest.spec.template.spec.containers[0].env[3].value
             defaultValue: "try4"
@@ -62,4 +62,3 @@ job:
                     volumeMounts:
                     - name: opsmx-terraspin-backend-config
                       mountPath: /home/terraspin/opsmx/app/config/
-

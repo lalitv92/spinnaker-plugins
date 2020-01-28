@@ -212,7 +212,6 @@ public class ApplyComponent {
 			    //String zipfilesrc = "/home/terraspin/" + spinStateRepoName + "/pipelineId-spinPipeId.zip";
 				String zipfilesrc = staterepoDirPath + "/" + uuId.trim() + ".zip";
 				
-
 				String extrapipelineidsrc = "/home/terraspin/extra/pipelineId-spinPipeId";
 				File extrapipelineidsrcdir = new File(extrapipelineidsrc);
 				if (!extrapipelineidsrcdir.exists())

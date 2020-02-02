@@ -5,7 +5,7 @@ A microservice to integrate with Spinnaker for planning, applying and destroying
 
 ## Developing terraSpin
 Need to run terraSpin locally for development? Here's what you need to setup and run:
-
+```
 ###	Environment setup
 git clone git@github.com:opsmx
 git clone git@github.com:opsmx
@@ -17,5 +17,5 @@ After buliding maven will put jar in target folder of TerraSpin directory
 
 ###	Running application
 to run microservice cmd- java -Dspring.config.location=application.properties -jar TerraSpin.jar 
-
+```
 

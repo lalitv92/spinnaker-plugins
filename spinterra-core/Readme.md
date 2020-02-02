@@ -1,4 +1,4 @@
-# TerraSpin  :beginner: __ :recycl:
+# TerraSpin  :beginner: time :recycl:
 
 A microservice to integrate with Spinnaker for planning, applying and destroying Terraform plans
 [TerraSpin Docs](https://docs.opsmx.com/codelabs/terraform-spinnaker) 

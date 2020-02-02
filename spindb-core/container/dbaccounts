@@ -1,0 +1,22 @@
+
+{
+  "dbaccounts": [
+    {
+      "accountname": "dbaccount",
+      "dbtype": "postgres",
+      "username": "user",
+      "password": "pwd",
+      "dbendpoint": "134.813.551.401:5432/try1"
+    },
+    {
+      "accountname": "dbaccount2",
+      "dbtype": "mysql",
+      "username": "user",
+      "password": "pwd",
+      "dbendpoint": "endpoint"
+    }
+  ]
+}
+
+
+

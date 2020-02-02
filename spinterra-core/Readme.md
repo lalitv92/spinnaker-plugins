@@ -8,9 +8,12 @@ Need to run terraSpin locally for development? Here's what you need to setup and
 
 ```
 # Environment setup & Bulding application
+we are using maven as build tool for buliding source code so maven 3 and uper version is required in your machine to build this source code.
+
+Clone this repository 
 git clone git@github.com:opsmx
 
-Clone this repository and go inside spinterra-core directory run below command to build application 
+Once cloning is done go inside spinterra-core directory run below command to build application 
 cmd- mvn clean install  
 After buliding maven will put jar in target folder of spinterra-core directory
 

@@ -11,8 +11,6 @@ RUN apt-get update && apt-get install -y \
     curl \
     jq
 
-#COPY /run.sh  /usr/local/bin/run.sh
-
 RUN groupadd -g 999 terraspin && \
     useradd -r -u 999 -g terraspin terraspin
 
@@ -37,8 +35,8 @@ COPY /ApplyRun.sh  /usr/local/bin/ApplyRun.sh
 
 COPY /DestroyRun.sh  /usr/local/bin/DestroyRun.sh
 
-COPY /OutputValues.properties  /home/terraspin/opsmx/app/OutputValues.properties
-
 COPY /TerraSpin.jar  /home/terraspin/artifact/TerraSpin.jar
+
+#COPY /run.sh  /usr/local/bin/run.sh
 
 #CMD run.sh
